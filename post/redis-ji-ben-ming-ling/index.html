@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>redis 基本命令 | airplane</title>
+<meta name="description" content="爱也不同，梦也从容">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1555296753294">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1555296753294" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">airplane</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">redis 基本命令</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2016-10-09</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/Wt3tKe04m">
+                    Java
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>🏆</p>
+<!-- more -->
+<h2 id="基本数据结构">基本数据结构</h2>
+<h3 id="字符串-strings">字符串 strings</h3>
+<pre><code class="language-c">set online:count 100
+get online:count
+incr count
+incrby count 4
+</code></pre>
+<h3 id="集合-set">集合 set</h3>
+<p>主要用于好友关系操作，交集并集都为o(1)</p>
+<pre><code class="language-c">sadd friends:zuston wei qiu yin chao
+sadd friends:wei qiu yin ruiding
+// 求交集
+sinter friends:zuston friends:wei 
+// 求差集
+sdiff friends:zuston friends:wei
+// 求并集
+sunion friends:zuston friends:wei
+// 获取成员数
+scard friends:zuston
+// 获取所有成员
+smembers friends:zuston
+//抛出一个成员，抛出就删除
+spop friends:zuston
+</code></pre>
+<h3 id="散列-hash">散列 hash</h3>
+<pre><code class="language-c">// 储存一个登录名,即一对多的关系
+hset user:loginName zuston jinxi32@163.com shacha
+hgetall user:loginName
+
+&lt;!-- 存储对象 --&gt;
+hmset user:zuston name &quot;zjf&quot; age 20 sex '男'
+hgetall user:zuston 
+hmget user:zuston name
+&lt;!-- 获取key的所有字段 --&gt;
+hkeys user:zuston
+&lt;!-- 获取key的所有字段的值 --&gt;
+hvals user:zuston
+</code></pre>
+<h3 id="有序集合-sorted-set">有序集合 sorted set</h3>
+<p>这个数据结构主要为ranking,实现排行榜,人员为唯一的，分数可以重复</p>
+<pre><code class="language-c">&lt;!-- 和集合一样，唯一区别的是给每一个加权重 --&gt;
+zadd name 1 zuston
+zadd name 2 wei
+zadd name 1 yin
+zrange name 0 10 
+&lt;!-- 获取全部val值 --&gt;
+zrange name 0 -1 withscores
+&lt;!--  --&gt;
+</code></pre>
+<h3 id="列表-list">列表 list</h3>
+<p>用于维持一个稳定的最新成员，比如最为亲近的10个成员</p>
+<pre><code class="language-c">lpush latest:friends:zuston wei yin qiu cheng shacha
+lpop latest:friends:zuston
+&lt;!-- 维持一个最新的10个成员 --&gt;
+ltrim latest:friends:zuston 0 10
+
+&lt;!-- 操作会被阻塞，如果指定的列表 key list1 存在数据则会返回第一个元素，否则在等待100秒后会返回 nil 。 --&gt;
+blpop list1 100
+&lt;!-- 堵塞返回最后一个成员,即为队列,timeout没有，则堵塞 --&gt;
+brpop list1 timeout 
+</code></pre>
+<h2 id="组合操作">组合操作</h2>
+<h3 id="事务-transaction">事务 transaction</h3>
+<p>用于维持一个稳定的最新成员，比如最为亲近的10个成员</p>
+<pre><code class="language-c">multi
+set key value
+exec
+</code></pre>
+<pre><code class="language-ruby">redis.multi()
+current = redis.get('powerlevel')
+redis.set('powerlevel', current + 1)
+redis.exec()
+</code></pre>
+<h3 id="使用期限-expiration">使用期限 expiration</h3>
+<p>redis可以标记一个关键字的过期时间，到期自动删除</p>
+<pre><code class="language-c">&lt;!-- 十秒后删除 --&gt;
+expire online:count 10
+&lt;!-- 查看key的存活时间 --&gt;
+ttl online:count
+</code></pre>
+<h3 id="发布和订阅-publication-and-subscription">发布和订阅 publication and subscription</h3>
+<pre><code class="language-c">subscribe news 
+&lt;!-- 另一客户端执行 --&gt;
+public news 'earthquake in beijing'
+</code></pre>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/tan-xin-suan-fa">
+              <h3 class="post-title">
+                下一篇：贪心算法
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

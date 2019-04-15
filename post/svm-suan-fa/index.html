@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>SVM算法 | airplane</title>
+<meta name="description" content="爱也不同，梦也从容">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1555296753294">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1555296753294" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">airplane</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">SVM算法</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2016-10-13</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/7d94xRJjI">
+                    算法
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>🏃</p>
+<!-- more -->
+<p>这一周刚好想要学习下机器学习以及数据分析这一块，正好下周需要讲一下算法，就想采用svm算法来讲一下。看的还是比较浅显的，先记下来备忘</p>
+<h3 id="算法简述">算法简述</h3>
+<p>svm算法算是监督学习，在机器学习里面是一个分类器。<br>
+举个栗子，还是沿用《机器学习实战》这本书里面的讲的knn算法的那个栗子。就是对于一部电影是武打片还是爱情片的判定。在这里，我们用出现武打的场景和出现吻戏以及床戏的场景数来进行作为分类的依据，那么对于每部电影都会有这么两个特征值。对于他们到底是武打片还是爱情片的类别呢，我们用一个label向量来一一对应表示他们的类别。比如[1,0,1,1],这里用1来表示武打，用0来表示爱情片。</p>
+<pre><code class="language-python">import numpy as np
+# 这里的label就是对于每一部电影的标识，训练集的话需要数据有标识，来达到分类的目标
+label = np.array([[1,0,1,1]])
+dataset = [[23,45],[35,23],[45,56],[45,23]]
+training_set = np.array(dataset)
+</code></pre>
+<p>那么对于trainning_set这个数据集的话是能够在二维的平面上进行表示的，这里熟悉的话可以用matplotlib来进行展示观察。此处我们就用二维来进行描述，对于这些点分好类的点，我们能够用一条线来进行区分他们，从而能够预测接下来的测试集，并给他们打上是武打片还是爱情片的论断。<br>
+svm算法就是能够在给线性可分的数据或者是线性不可分的数据进行分类，至于拟合的函数接下来说。还是阐述下二维的拟合线性的函数的思路。对于一组在二维平面上线性可分的数据来说，我们要找到这两组数据的明确分割点，从而找到他们的支持向量，从而在最大化两组支持向量间的距离，这样的话，对于超平面的位置基本就确定了。只要在两组最大化的支持向量中间就是超平面的位置。(眼见着要睡觉了，还是记下些自己懂的吧)<br>
+<img src="http://zuston.github.io/post-images/1555295360272.jpg" alt="支持向量和超平面位置">
+那么对于线性不可分的数据集，其实我们可以映射到高维来看。（举个例子，在二维下，我们的线性分割是线。在三维下，我们的超平面是个面，那么依此可推，在n维下，超平面是和n-1维的东西，这里先打个预防针，知晓下）。低维度的线性不可分，其实在高维看来只是压缩重叠了一个坐标轴而已，因为依照核函数，其实可以拉伸一维，从而在这一维度存在超平面。所以任意的数据集都是线性可分的，只要找到合适的超平面。<br>
+<img src="http://zuston.github.io/post-images/1555295378040.png" alt="二维下的线性不可分图像">
+<img src="http://zuston.github.io/post-images/1555295389325.gif" alt="">
+在回到二维的环境下，假设数据是线性可分的，我们拟合的函数那么对于label是如何判定的呢，误差大不大呢？这里就是一个线性回归的问题，对于回归函数我们一般采用一个两个无穷最后趋近于两个值的函数，来做sig函数。意思就是说，只要远离那个分界点（0.5），就能够最大程度预测，误差减小。
+<img src="http://zuston.github.io/post-images/1555295399625.png" alt="">
+<img src="http://zuston.github.io/post-images/1555295437476.png" alt=""></p>
+<h3 id="附上svm算法实例和训练集和测试集">附上svm算法实例和训练集和测试集</h3>
+<p>https://github.com/zuston/code-library/blob/master/ml-basic-algorithm/svm/sklean-svm.py</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/redis-ji-ben-ming-ling">
+              <h3 class="post-title">
+                下一篇：redis 基本命令
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

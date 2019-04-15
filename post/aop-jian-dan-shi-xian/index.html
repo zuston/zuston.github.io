@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>AOP简单实现 | airplane</title>
+<meta name="description" content="爱也不同，梦也从容">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1555296753294">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1555296753294" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">airplane</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">AOP简单实现</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2016-12-19</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/Wt3tKe04m">
+                    Java
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>tomorrow is another day</p>
+<!-- more -->
+<p>上一篇所实现web framework 里面的 AOP 就是这一篇要详细叙述的，并且叙述如何实现一个链式代理。
+所谓的 <code>AOP</code> 其实就是 <code>依赖注入</code> ，我们一般也称之为 <code>控制反转</code> 。 其实我觉得都有这个意思，<code>注入</code>这个词很好的诠释了 AOP 的思想，说明我们可以对于某些请求方法来进行监控和 filter ， 而 <code>反转</code> 这个词正是说明在实现方式上我们采用的是反射。我们先来看静态代理的实现。</p>
+<h3 id="静态代理">静态代理</h3>
+<p>静态代理就是实现一个类的接口方法的代理，优点是简单，缺点是对于很多类需要一个个实现每一个不同的代理。繁琐异常</p>
+<pre><code class="language-java">public interface animal{
+    void eat();
+}
+
+public class dog implements animal{
+    public void eat(){
+        System.out.println(&quot;dog is eating&quot;);
+    }
+}
+
+public class proxy implements animal{
+    public animal object;
+    public proxy(animal object){
+        this.object = object;
+    }
+
+    public void eat(){
+        System.out.println(&quot;before&quot;);
+        this.object.eat();
+        System.out.println(&quot;after&quot;);
+    }
+}
+</code></pre>
+<h3 id="动态代理">动态代理</h3>
+<h4 id="jdk-方式">jdk 方式</h4>
+<h4 id="代码地址-httpsgithubcomzustontodositeblobmastersrcmaintestjavalearningthreadingaopjava">代码地址 》》 https://github.com/zuston/todoSite/blob/master/src/main/test/javaLearning/threading/aop.java</h4>
+<pre><code class="language-java">public class aop {
+
+    public static void main(String[] args) {
+        //此处输出也会有before和after，怀疑是sout调用了tostring,事实证明是的
+        System.out.println(new proxy(new helloImpl()).getProxy());
+        hello action = new proxy(new helloImpl()).getProxy();
+        action.say();
+    }
+}
+
+
+interface hello{
+    public void say();
+}
+
+
+class helloImpl implements hello{
+    public helloImpl(){
+        System.out.println(&quot;init the instance&quot;);
+    }
+    public void say(){
+        System.out.println(&quot;hello!&quot;);
+    }
+
+    @Override
+    public String toString() {
+        System.out.println(&quot;tostring invoke&quot;);
+        return super.toString();
+    }
+}
+
+
+class proxy implements InvocationHandler{
+
+    public Object oj = null;
+
+    public proxy(Object oj){
+        this.oj = oj;
+    }
+
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        System.out.println(&quot;before&quot;);
+        Object res = method.invoke(oj,args);
+        System.out.println(&quot;after&quot;);
+        return res;
+    }
+
+    public &lt;T&gt; T getProxy(){
+        return (T) Proxy.newProxyInstance(
+                oj.getClass().getClassLoader(),
+                oj.getClass().getInterfaces(),
+                this
+        );
+    }
+}
+</code></pre>
+<h3 id="链式动态代理的实现">链式动态代理的实现</h3>
+<h4 id="代码地址-httpsgithubcomzustontodositeblobmastersrcmaintestframeworkaoptestjava">代码地址 》》https://github.com/zuston/todoSite/blob/master/src/main/test/framework/aopTest.java</h4>
+<h4 id="一到晚上就懒得写了">一到晚上就懒得写了</h4>
+<pre><code class="language-java">/**
+ * 实现多重aop的调用，因为cglib不支持
+ */
+public class aopTest {
+
+    public static void main(String[] args) {
+
+        fuckImpl fl = new fuckImpl();
+        final List&lt;baseProxy&gt; listProxy = new ArrayList&lt;&gt;();
+        listProxy.add(new aProxy());
+        listProxy.add(new bProxy());
+
+        hello sHello = (hello) Enhancer.create(fl.getClass(), new MethodInterceptor() {
+            @Override
+            public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+                Object res = new proxyChain(listProxy,o,method,objects,methodProxy).doChain();
+                return res;
+            }
+        });
+        sHello.say();
+    }
+}
+
+class proxyChain{
+    List&lt;baseProxy&gt; listProxy = new ArrayList&lt;&gt;();
+    Object o;
+    Method method;
+    Object[] objects;
+    MethodProxy methodProxy;
+
+    int index = 0;
+
+    public proxyChain(List&lt;baseProxy&gt; listProxy, Object o, Method method, Object[] objects, MethodProxy methodProxy) {
+        this.listProxy = listProxy;
+        this.o = o;
+        this.method = method;
+        this.objects = objects;
+        this.methodProxy = methodProxy;
+    }
+
+    public Object doChain() throws Throwable {
+        Object res = null;
+        if(index&lt;listProxy.size()){
+            res = listProxy.get(index++).doProxy(this);
+        }else{
+            res = methodProxy.invokeSuper(o,objects);
+        }
+        return res;
+    }
+}
+
+
+interface hello{
+    void say();
+}
+
+class helloImpl implements hello{
+
+    @Override
+    public void say() {
+        System.out.println(&quot;hello world&quot;);
+    }
+}
+
+
+class fuckImpl implements hello{
+
+    @Override
+    public void say() {
+        System.out.println(&quot;fuck world&quot;);
+    }
+}
+
+class baseProxy{
+    public Object doProxy(proxyChain chain) throws Throwable {
+        before();
+        //递归调用
+        Object res = chain.doChain();
+        after();
+        return res;
+    }
+
+    public void before(){
+
+    }
+
+    public void after(){
+
+    }
+}
+
+
+class aProxy extends baseProxy{
+    public void before(){
+        System.out.println(&quot;a.before&quot;);
+    }
+
+    public void after(){
+        System.out.println(&quot;a.after&quot;);
+    }
+}
+
+
+class bProxy extends baseProxy{
+    public void before(){
+        System.out.println(&quot;b.before&quot;);
+    }
+
+    public void after(){
+        System.out.println(&quot;b.after&quot;);
+    }
+}
+</code></pre>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/shi-xian-java-mvc-frameworkmd">
+              <h3 class="post-title">
+                下一篇：实现java-mvc-framework.md
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

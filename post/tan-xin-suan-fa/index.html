@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>贪心算法 | airplane</title>
+<meta name="description" content="爱也不同，梦也从容">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1555296753294">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1555296753294" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">airplane</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">贪心算法</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2016-09-25</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/7d94xRJjI">
+                    算法
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>🏆<br>
+恶补一下之前的算法，做完之后看了大神解法，自己理解下，记录下来。</p>
+<!-- more -->
+<h2 id="1longest-substring-without-repeating-characters">1：Longest Substring Without Repeating Characters</h2>
+<h4 id="given-a-string-find-the-length-of-the-longest-substring-without-repeating-characters">Given a string, find the length of the longest substring without repeating characters.</h4>
+<p><strong>example</strong>:
+Given &quot;abcabcbb&quot;, the answer is &quot;abc&quot;, which the length is 3.
+Given &quot;bbbbb&quot;, the answer is &quot;b&quot;, with the length of 1.
+Given &quot;pwwkew&quot;, the answer is &quot;wke&quot;, with the length of 3. Note that the answer must be a substring, &quot;pwke&quot; is a subsequence and not a substring.</p>
+<p>题目：就是寻找最长不重复字串
+解析：其实最方便最暴力的解法就是将每一个字符与后面的字符进行比较，然后发现与现有的字串重复的则重新开始下一轮循环比较。那么这个算法时间复杂度是比较高的，应该是o(n^2),改进的算法就是在比较这一轮上下功夫，用一个很巧妙的方法进行比较。
+换种看字符是否存在过的思路:则是将出现过的字符以字符名为key，当前位置值i为value组成数组，如果发现有重复，则记录当前字符名下的数组的value值，从而可以计算出当前的不重复字串的长度。
+在这个过程中，我们要明确一点就是对于一个重复字符的字串，那么下一个开始查找子串的初始位置，必然在其重复字串出现的第一个的下一位。
+<strong>example</strong>：
+数组为:  int array[100];
+index:  0--------1--------2-----------3--------4-----------5------------6
+value:  a--------b--------c-----------a--------c-----------g------------h</p>
+<p><strong>first loop</strong>:     从array[0]到array[3]中，发现index=0和index=3重复
+<strong>second loop</strong>:    从array[1]开始到array[4],发现index=2和index=4重复
+<strong>third loop</strong>:     从array[3]开始，到最后都没有重复字符
+就是这么一个比较的过程</p>
+<p>代码如下：</p>
+<pre><code class="language-c">int lengthOfLongestSubstring(char* s){
+    int length = strlen(s);
+    int MAX_SIZE = 256;
+    int parray[MAX_SIZE];
+    for(int i=0;i&lt;MAX_SIZE;i++){
+        parray[i]=-1;
+    }
+    int max=0,start=0;
+    for(int i=0;i&lt;length;i++){
+        if(parray[s[i]]!=-1){
+            max = max&gt;(i-start)?max:i-start;
+            start = parray[s[i]]+1&gt;start?parray[s[i]]+1:start;
+        }
+        parray[s[i]]=i;
+    }
+    return max&gt;length-start?max:length-start;
+}
+</code></pre>
+<h2 id="2container-with-most-water">2：Container With Most Water</h2>
+<h3 id="given-n-non-negative-integers-a1-a2-an-where-each-represents-a-point-at-coordinate-i-ai-n-vertical-lines-are-drawn-such-that-the-two-endpoints-of-line-i-is-at-i-ai-and-i-0-find-two-lines-which-together-with-x-axis-forms-a-container-such-that-the-container-contains-the-most-water">Given n non-negative integers a1, a2, ..., an, where each represents a point at coordinate (i, ai). n vertical lines are drawn such that the two endpoints of line i is at (i, ai) and (i, 0). Find two lines, which together with x-axis forms a container, such that the container contains the most water.</h3>
+<p>题目：寻找面积的最大值，这个也比较简单。循环所有的，找出面积最大的。在这里，我发现其实所谓贪心算法，就是走完一遍，查找最优值，不过在寻找的过程中，并不是暴力所有情况，而是针对不同的环境，来省略很多不需要的情况。比如在此题中，我们就确定最后的面积是有短板的那个高度所决定的，所以在比较的过程中就是在相对情况下，忽略那些短板。</p>
+<p>代码如下：</p>
+<pre><code class="language-c">int maxArea(int* height, int heightSize) {
+    int head=0,res=0,tail=heightSize-1;
+    while(tail&gt;head){
+        int tempRes = (height[head]-height[tail]&gt;0?height[tail]:height[head])*(tail-head);
+        res = tempRes-res&gt;0?tempRes:res;
+        //这边的比较即是相对情况下，选取height高的那块板
+        if(height[head]&lt;height[tail]){
+            head++;
+        }else{
+            tail--;
+        }
+    }
+    return res;
+}
+</code></pre>
+
+          </div>
+        </div>
+
+        
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

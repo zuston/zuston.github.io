@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>动态规划 | airplane</title>
+<meta name="description" content="爱也不同，梦也从容">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1555296753294">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1555296753294" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">airplane</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">动态规划</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2016-11-06</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/7d94xRJjI">
+                    算法
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>对于动态规划，最为基础的可能就是<code>0-1背包问题</code>，<code>完全背包</code>等一系列背包问题。回顾一下此类动态规划的解法。</p>
+<h3 id="背包问题">背包问题</h3>
+<h4 id="0-1背包">0-1背包</h4>
+<p>问题：有n个物品，第i个物品价值为vi，重量为wi，其中vi和wi均为非负数，背包的容量为W，W为非负数。现需要考虑如何选择装入背包的物品，使装入背包的物品总价值最大<br></p>
+<p>解法：找到状态转移方程，此处设<code>V{n,weight}=max(V{n-1,weight},V{n-1,w-w[n-1]}+v[n-1])</code>,此处的<code>V{n,weight}</code>就是第n个物品时的最大背包容量weight时候的价值，依次递推式子，由下一项所确定。于是很简单，代码实现就可以了。但注意：此题中<code>V{0,wei}=0 0&lt;=wei&lt;=weight</code>。如果理解深入的话，这里的代码实现的话，是每次都要算出0-weight之间的区间的所有价值的，之所以此，是因为不可知最后一次的weight重量，因此只能默默全部算出来了。<br>
+分析：贪心算法与动态规划的算法之间的区别在于，动态规划要实现全局最优的话，因为题目中条件之间有关联关系，因此每次的局部最优并非是全局最优。而贪心算法就是局部最优，而全局最优是由很多局部最优所组成。<br>
+递归算法：说到底，所有的动态规划问题都可以用递归算法解决，时间复杂度和栈。背包问题就是放与不放的问题，因此可以用两种状态来迭代，最后的退出条件就是放完了，或者是其他放满了等等。具体问题具体分析了。<br></p>
+<h4 id="完全背包问题">完全背包问题</h4>
+<p>问题：有n个物品，第i个物品价值为vi，重量为wi，其中vi和wi均为非负数，背包的容量为W，W为非负数。现需要考虑如何选择装入背包的物品，使装入背包的物品总价值最大并且装满,是否存在<br>
+分析：很简单，在0-1背包的基础上,最后判断价值最大的时候，weight是否为背包容量W<br></p>
+<h4 id="部分背包问题略">部分背包问题（略）</h4>
+<br>
+<h3 id="走路问题">走路问题</h3>
+<p>这个问题很好玩，一开始不会做，理解之后就很简单了。以下从简到难</p>
+<h4 id="爬楼梯问题-leetcode-easy">爬楼梯问题  leetcode [easy]</h4>
+<p>问题：You are climbing a stair case. It takes n steps to reach to the top.Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?<br>
+解法：最后一步肯定是由前一步和前两步所决定，所以方程 step[n] = step[n-1]+step[n-2];
+然后再一看，这不是斐波那契数列吗？
+还记得以前斐波那契可以用递归实现吗？
+那么这道题用递归实现是什么意思呢？
+就是第一次走一步还是两步呢，于是就迭代两种方法。</p>
+<p>附上代码：https://github.com/zuston/leetcode/blob/master/ClimbingStairs.java</p>
+<h4 id="最小路径和">最小路径和</h4>
+<p>问题：Given a m*n grid filled with non-negative numbers, find a path from top left to bottom right which minimizes the sum of all numbers along its path.<br>
+解法: 最后一条路径求解由两条路径过来，postion转移数组pos[]={ {0,1} , {1,0} },一次算出就可以值的多少，当然取小的一方。注意的是边界情况<br>
+附上代码：https://github.com/zuston/leetcode/blob/master/MinimumPathSum.java<br></p>
+<h4 id="unique-paths">Unique Paths</h4>
+<p>问题：A robot is located at the top-left corner of a m x n grid (marked 'Start' in the diagram below).
+The robot can only move either down or right at any point in time. The robot is trying to reach the bottom-right corner of the grid (marked 'Finish' in the diagram below).
+How many possible unique paths are there?
+解法：上一题的翻版，变为有多少条可能路径了。更简单了。
+附上代码：https://github.com/zuston/leetcode/blob/master/UniquePaths.java</p>
+<h4 id="unique-paths-ii">Unique Paths II</h4>
+<p>问题：这一题很有意思
+Follow up for &quot;Unique Paths&quot;:
+Now consider if some obstacles are added to the grids. How many unique paths would there be?
+An obstacle and empty space is marked as 1 and 0 respectively in the grid.
+For example,
+There is one obstacle in the middle of a 3x3 grid as illustrated below.
+[
+[0,0,0],
+[0,1,0],
+[0,0,0]
+]
+The total number of unique paths is 2.
+解析：这一题和上一题的区别在于，此题在路径中设置了路障了，因此从它开始的一些路径无法遍历了。那么就设置从这儿走的路径为1,路障则为0，因为此路不通，注意注意，这一题的边界的问题需要考虑清楚
+代码附上：https://github.com/zuston/leetcode/blob/master/UniquePathsII.java</p>
+<h4 id="还有很多类似的这个走路问题还是很有趣的-还有代价值最小的三角形也是一样的思路此处不表快做烂了">还有很多类似的，这个走路问题还是很有趣的。还有代价值最小的三角形，也是一样的思路，此处不表，快做烂了。</h4>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/k-means-he-knn">
+              <h3 class="post-title">
+                下一篇：k-means和knn
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

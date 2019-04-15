@@ -1,0 +1,489 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>实现java-mvc-framework.md | airplane</title>
+<meta name="description" content="爱也不同，梦也从容">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1555296753294">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1555296753294" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">airplane</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">实现java-mvc-framework.md</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2016-12-19</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/Wt3tKe04m">
+                    Java
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <h4 id="代码地址-httpsgithubcomzustontodosite">代码地址 》》 https://github.com/zuston/todoSite</h4>
+<!-- more -->
+<p>之前做的都不是 jvm 系列语言的开发，基本都是动态语言，比如 python , php , nodejs 一些。面对之后的工作，决定还是从事 java 语言这一方面的，还是需要学习一下。因为之前也写过 java ，所以上手难度比较低。看了一些书，差不多实现了一个 web framework ,还积累了一些 java 的基础知识需要记录下来，免得遗忘。</p>
+<h3 id="整体架构">整体架构</h3>
+<p>参照之前 php 的框架，如果自己实现 mvc 架构，基本就是根据 url 中传来的 action 参数和 controller 参数来实现动态调用类和方法。 php 直接就能将字符串调用函数和类，从而来实例化。这一点是动态语言的一点优势，不过 Python 并不支持如此调用。因此语言之间的差异还是存在的。对于 java 的话实现的 mvc 整体架构的话，技术上是需要用它的 <code>反射机制</code> 和 <code>类加载器</code> 来实现的，那么路由的实现，是采用 <code>注解</code> 来实现的。<br>
+对于实现 <code>AOP</code> 的话，是采用了 java 中的 cglib 来实现的动态代理，这里参照书中，实现了链式代理功能。<br>
+对于实现 <code>ORM</code> 功能，在这里的调用时参照 php 里的 yii 框架中的 active record 。具体的实现，是采用建立 bean 类，继承整体自己实现的 baseOrm 来实现整体功能，具体可见代码。</p>
+<h3 id="实现方法">实现方法</h3>
+<p>我们知道，对于 java web 平台的开发，是建立在 java 的 servlet 基础上的，那么不同于 nginx 采用 php-fpm 来调用 php 代码，我们采用 tomcat 来开发的话，其实是 tomcat 实现了一个 web 服务器，对于每一个请求都会分配线程来执行，这边不再赘述。那么对于我们开发一个 web framework 还是实现路由，都是建立在获取请求参数的基础之上，因此我们要做的就是实现一个单 servlet 分发，从来根据请求来动态调用方法，渲染页面。<br></p>
+<h4 id="首先获取所有的-controller-class-和-function-获取并且根据他们的-注解-来一一匹配放入-hashmap-中这样根据请求中所带参数可以调用-方法-可以看一下实现代码">首先获取所有的 controller Class 和 function ,获取并且根据他们的 <code>注解</code> 来一一匹配放入 HashMap 中，这样根据请求中所带参数可以调用 方法 。可以看一下实现代码</h4>
+<pre><code class="language-java">public class coreHelper {
+
+
+    public static HashMap&lt;requestEntity,handlerEntity&gt; coreMap = new HashMap&lt;requestEntity, handlerEntity&gt;();
+
+    static{
+        Set&lt;Class&lt;?&gt;&gt; controllerClass = classHelper.getAllControllerClass();
+        for (Class oneClass:controllerClass){
+            for(Method m:oneClass.getDeclaredMethods()){
+                if(m.isAnnotationPresent(action.class)){
+                    String actionValue = m.getAnnotation(action.class).value();
+                    if(actionValue.split(&quot;:&quot;).length==2){
+                        String requestMethod = actionValue.split(&quot;:&quot;)[0].trim();
+                        String requestUrlPattern = actionValue.split(&quot;:&quot;)[1].trim();
+                        requestEntity request = new requestEntity(requestMethod,requestUrlPattern);
+                        handlerEntity handler = new handlerEntity(oneClass,m);
+                        coreMap.put(request,handler);
+                    }
+                }
+            }
+        }
+    }
+    public static HashMap&lt;requestEntity,handlerEntity&gt; getCoreMap(){
+        return coreMap;
+    }
+
+    public static handlerEntity getHandler(requestEntity request){
+        handlerEntity handler = null;
+        if(coreMap.containsKey(request)){
+            handler = coreMap.get(request);
+        }
+        return handler;
+    }
+}
+</code></pre>
+<h4 id="对于-orm-的实现可以来看一下如下的实例以及调用方式">对于 ORM 的实现，可以来看一下如下的实例，以及调用方式</h4>
+<pre><code class="language-java">public class baseOrm {
+    public static Connection conn = null;
+
+    private void getConn(){
+        conn = new dbUtil().getInstance();
+    }
+    public boolean save() throws IllegalAccessException {
+        if(conn==null){
+            getConn();
+        }
+
+        int paramCount = this.getClass().getDeclaredFields().length;
+        String url = String.format(&quot;insert into %s(%s) values(%s)&quot;,
+                this.getClass().getSimpleName(),
+                this.getClass().getDeclaredFields()[0].getName(),
+                this.getClass().getDeclaredFields()[0].get(this));
+
+        String tableName = this.getClass().getSimpleName();
+        String sqlFormatFront = &quot;insert into &quot;+tableName+&quot;(&quot;;
+        String sqlFormatEnd = &quot;values(&quot;;
+        for(java.lang.reflect.Field field:this.getClass().getDeclaredFields()){
+            String name = field.getName();
+            Object type = field.getType();
+            Object value = field.get(this);
+            sqlFormatFront = sqlFormatFront+name+&quot;,&quot;;
+            if(type.equals(String.class)){
+                sqlFormatEnd = sqlFormatEnd + &quot;'&quot; + (String)value + &quot;',&quot;;
+            }else{
+                sqlFormatEnd = sqlFormatEnd + value + &quot;,&quot;;
+            }
+        }
+        sqlFormatFront = sqlFormatFront.substring(0,sqlFormatFront.length()-1)+&quot;)&quot;;
+        sqlFormatEnd = sqlFormatEnd.substring(0,sqlFormatEnd.length()-1)+&quot;)&quot;;
+        String sql = sqlFormatFront + &quot; &quot; + sqlFormatEnd;
+        System.out.println(sql);
+
+        try {
+            Statement state = conn.createStatement();
+            return state.execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+    public static HashMap&lt;String,Object&gt; sqlCondition = new HashMap&lt;String, Object&gt;();
+
+
+    public baseOrm find(){
+        String tableName = this.getClass().getSimpleName();
+        if (sqlCondition.isEmpty()){
+            sqlCondition.put(&quot;tableName&quot;,tableName);
+            return this;
+        }
+        return this;
+    }
+
+
+
+    public baseOrm findOne(){
+        return this;
+    }
+
+    // TODO: 16/11/30 update实现
+    public baseOrm update(){
+        String url = &quot;update tablename set id = 10 where name=&quot;;
+        if(conn==null){
+            getConn();
+        }
+        String tableName = this.getClass().getSimpleName();
+        for (Field field:this.getClass().getDeclaredFields()){
+
+        }
+        return this;
+    }
+
+    public ResultSet findBySql(String sql) throws SQLException {
+        if(conn==null){
+            getConn();
+        }
+        Statement sts = conn.createStatement();
+        ResultSet res = sts.executeQuery(sql);
+        return res;
+    }
+
+
+
+    public boolean delete(){
+        return false;
+    }
+
+    public boolean deleteAll(){
+        return false;
+    }
+
+    public boolean deleteOne(){
+        return false;
+    }
+
+
+    public baseOrm where(HashMap&lt;String,Object&gt; hs){
+        sqlCondition.put(&quot;condition&quot;,hs);
+        return this;
+    }
+
+    public baseOrm orderby(String tag){
+        sqlCondition.put(&quot;order&quot;,tag);
+        return this;
+    }
+
+    public &lt;T&gt; T one() throws Exception {
+        if(conn==null){
+            getConn();
+        }
+        if(!sqlCondition.containsKey(&quot;tableName&quot;)){
+            throw new Exception(&quot;tableName error&quot;);
+        }
+        String tableName = (String) sqlCondition.get(&quot;tableName&quot;);
+        String baseSql = &quot;select * from &quot;;
+        baseSql += tableName;
+
+        String conditionSql = &quot;&quot;;
+        if(sqlCondition.containsKey(&quot;condition&quot;)){
+            HashMap&lt;String, Object&gt; condition = (HashMap&lt;String,Object&gt;)sqlCondition.get(&quot;condition&quot;);
+            conditionSql = &quot; where &quot;;
+            if(condition!=null){
+                for(Map.Entry&lt;String,Object&gt; mp:condition.entrySet()){
+                    conditionSql += &quot;&quot;+mp.getKey()+&quot;='&quot;+mp.getValue()+&quot;' and &quot;;
+                }
+            }
+        }
+        String orderSql = &quot;&quot;;
+        if(sqlCondition.containsKey(&quot;order&quot;)){
+            String tag = (String) sqlCondition.get(&quot;order&quot;);
+            orderSql += &quot; order by '&quot; + tag +&quot;'&quot;;
+        }
+        String limitSql = &quot; limit 1&quot;;
+        String sql = baseSql;
+        if(!conditionSql.equals(&quot;&quot;)){
+            String csql = conditionSql.substring(0,conditionSql.lastIndexOf(&quot;and&quot;));
+            sql += csql;
+        }
+        if(!orderSql.equals(&quot;&quot;)){
+            sql += orderSql;
+        }
+        sql += limitSql;
+        System.out.println(sql);
+        Statement sts = conn.createStatement();
+        ResultSet res = sts.executeQuery(sql);
+        // TODO: 16/11/28 生成一个对象模型
+        Object model = generateModel(tableName,res);
+        flush();
+        return (T)model;
+    }
+
+    public &lt;T&gt; List&lt;T&gt; all() throws Exception {
+        if(conn==null){
+            getConn();
+        }
+
+        if(!sqlCondition.containsKey(&quot;tableName&quot;)){
+            throw new Exception(&quot;tableName error&quot;);
+        }
+        String tableName = (String) sqlCondition.get(&quot;tableName&quot;);
+        String baseSql = &quot;select * from &quot;;
+        baseSql += tableName;
+
+        String conditionSql = &quot;&quot;;
+        if(sqlCondition.containsKey(&quot;condition&quot;)){
+            HashMap&lt;String, Object&gt; condition = (HashMap&lt;String,Object&gt;)sqlCondition.get(&quot;condition&quot;);
+            conditionSql = &quot; where &quot;;
+            if(condition!=null){
+                for(Map.Entry&lt;String,Object&gt; mp:condition.entrySet()){
+                    conditionSql += &quot;&quot;+mp.getKey()+&quot;='&quot;+mp.getValue()+&quot;' and &quot;;
+                }
+            }
+        }
+        String sql = baseSql;
+        if(!conditionSql.equals(&quot;&quot;)){
+            String csql = conditionSql.substring(0,conditionSql.lastIndexOf(&quot;and&quot;));
+            sql += csql;
+        }
+        System.out.println(sql);
+        Statement sts = conn.createStatement();
+        ResultSet res = sts.executeQuery(sql);
+        // TODO: 16/11/28 生成一个对象模型
+        List&lt;Object&gt; models = generateModels(tableName,res);
+        flush();
+        return (List&lt;T&gt;) models;
+    }
+
+
+    private Object generateModel(String modelName,ResultSet res) throws ClassNotFoundException, IllegalAccessException, InstantiationException, SQLException {
+        while (res.next()){
+            String packageOrm = configHelper.packageOrm();
+
+            ClassLoader cls = Thread.currentThread().getContextClassLoader();
+            Class newModel = cls.loadClass(packageOrm+&quot;.&quot;+modelName);
+            Object instance = newModel.newInstance();
+            for (Field field:this.getClass().getDeclaredFields()){
+                field.setAccessible(true);
+                Object value = null;
+                if (field.getType()==String.class){
+                    value = (String)res.getString(field.getName());
+                }else{
+                    value = (int)res.getInt(field.getName());
+                }
+                field.set(instance,value);
+            }
+            return instance;
+        }
+        return null;
+    }
+
+
+
+    private List&lt;Object&gt; generateModels(String modelName,ResultSet res) throws SQLException, IllegalAccessException, InstantiationException, ClassNotFoundException {
+        List&lt;Object&gt; container = new ArrayList&lt;Object&gt;();
+        String packageOrm = configHelper.packageOrm();
+        ClassLoader cls = Thread.currentThread().getContextClassLoader();
+        Class newModel = cls.loadClass(packageOrm+&quot;.&quot;+modelName);
+        while (res.next()){
+            Object instance = newModel.newInstance();
+            for (Field field:this.getClass().getDeclaredFields()){
+                field.setAccessible(true);
+                Object value = null;
+                if (field.getType()==String.class){
+                    value = (String)res.getString(field.getName());
+                }else{
+                    value = (int)res.getInt(field.getName());
+                }
+                field.set(instance,value);
+            }
+            container.add(instance);
+        }
+        return container;
+    }
+
+    // every action must flush the condition hashmap,avoid influencing the next query action
+    private boolean flush(){
+        sqlCondition = new HashMap&lt;String, Object&gt;();
+        return true;
+    }
+}
+</code></pre>
+<p>具体调用的话是如下：</p>
+<pre><code class="language-java">public class thing extends baseOrm {
+
+    public int userId;
+    public String content;
+
+    public thing(int userId, String content) {
+        this.userId = userId;
+        this.content = content;
+    }
+
+    public thing() {
+    }
+
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public static void main(String[] args) throws Exception {
+        thing tg = new thing();
+        thing res = tg.find().one();
+
+        thing am = new thing();
+        HashMap&lt;String,Object&gt; hs = new HashMap&lt;String, Object&gt;();
+        hs.put(&quot;name&quot;,&quot;shacha&quot;);
+        hs.put(&quot;permission&quot;,&quot;root&quot;);
+        am.find().where(hs).one();
+    }
+}
+</code></pre>
+<h4 id="对于-aop-的实现是采用了动态代理的方式下一篇再详细讲一下">对于 AOP 的实现，是采用了动态代理的方式，下一篇再详细讲一下</h4>
+<h2 id="代码地址-httpsgithubcomzustontodosite-2">代码地址 》》 https://github.com/zuston/todoSite</h2>
+<h2 id="todo">TODO</h2>
+<p>[ ] baseOrm 重构和完善
+[ ] 实现IOC
+[ ] 完成 java web server
+[ ] 关于 Classloader.load() 和 Class.forName() 的区别
+[ ] 动态代理的设计和实现
+[ ] nio io多路复用模型
+[ ] HashMap 的底层实现</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/threadlocal-qian-xi">
+              <h3 class="post-title">
+                下一篇：ThreadLocal浅析
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

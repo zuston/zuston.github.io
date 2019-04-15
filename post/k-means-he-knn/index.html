@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>k-means和knn | airplane</title>
+<meta name="description" content="爱也不同，梦也从容">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1555296753294">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1555296753294" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">airplane</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">k-means和knn</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2016-10-20</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/7d94xRJjI">
+                    算法
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>🏆</p>
+<!-- more -->
+<h2 id="knn">knn</h2>
+<p>knn是数据分析的中很简单的一种分类算法，对于一组具有n个特征元素的数据集，在线性可分的情况下，运用knn来进行分类。其实现实情况下，采用的不是很多，比如验证码识别采用knn就识别率很低。并不是优化问题，而是算法本身的局限性。<br>
+knn算法是说对于一系列已经打好标签的点，对于下一个要预测的点，则用这个点与所有已有label的点来进行距离（distance）比较，将distance最小的k个点取出来，查看他们的label的种类最多的那个，就是预测的结果<br></p>
+<pre><code class="language-python">#coding:utf-8
+import numpy as np
+import matplotlib.pyplot as plt
+
+def knn(exmpleSet,dataset,labelset,k):
+        if len(dataset)!=len(labelset):
+            print '检查参数，标记数和数据集不对等'
+            return
+
+        dset = np.array(dataset)
+        # 一维数组
+        eset = np.array(exmpleSet)
+
+        res = (((dset-eset)**2).sum(axis=1))**0.5
+        index = np.argsort(res)
+        resCount = {0:0,1:0}
+        for c in range(k):
+            labelFlag = labelset[index[c]]
+            resCount[labelFlag] += 1
+
+        # print resCount
+        return 0 if resCount[0]&gt;resCount[1] else 1
+
+def show(exmpleSet,data,labelset,predictLabel):
+    mark = ['or', 'ob', 'og', 'ok', '^r', '+r', 'sr', 'dr', '&lt;r', 'pr']
+    index=0
+    for td in data:
+        plt.plot(float(td[0])/10,float(td[1])/10,mark[labelset[index]],markersize=10)
+        index += 1
+    plt.plot(float(exmpleSet[0])/10,float(exmpleSet[1])/10,'pr',markersize=15)
+    plt.show()
+
+if __name__ == '__main__':
+    '''
+    电影场景的判断：x参数为打斗出现场景次数
+                 y参数为吻戏出现场景次数
+                 labelset 标记为0为打斗戏，1为爱情戏
+                 来自《machine learning in action》
+    '''
+    exmpleSet = [3,2]
+    dataset = [[8,3],[10,1],[45,32],[78,34],[9,18],[23,45],[34,45],[12,19]]
+    labelset = [0,0,0,0,1,1,1,1]
+    predictLable =  knn(exmpleSet,dataset,labelset,5)
+    show(exmpleSet,dataset,labelset,predictLable)
+    print predictLable
+</code></pre>
+<h4 id="附上简单实现">附上简单实现</h4>
+<p>https://github.com/zuston/code-library/blob/master/ml-basic-algorithm/KNN.py</p>
+<h2 id="k-means">k-means</h2>
+<p>k-means是数据分析的聚类算法，相对于分类算法，聚类算法算是无监督学习的一种入门算法。简单一提，无监督学习就是对于一些未处理的数据通过算法干打标签的活，再针对这个进行学习预测下面的点。监督学习的话，就是以上所述的分类算法了，已经打好标签了。<br>
+懒得叙述了，第一次新鲜ppt和代码献上。代码可出图，前提先安装matplotlib.<br></p>
+<h4 id="附上地址">附上地址</h4>
+<p>https://github.com/zuston/code-library/tree/master/ml-basic-algorithm/k-means</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/svm-suan-fa">
+              <h3 class="post-title">
+                下一篇：SVM算法
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
