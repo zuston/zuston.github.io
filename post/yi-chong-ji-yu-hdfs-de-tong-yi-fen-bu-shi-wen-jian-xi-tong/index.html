@@ -5,7 +5,7 @@
     
 <meta charset="utf-8" >
 
-<title>Hello Gridea | airplane</title>
+<title>一种基于HDFS的统一分布式文件系统 | airplane</title>
 <meta name="description" content="爱也不同，梦也从容">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -79,55 +79,28 @@
       <div class="content-container">
         <div class="post-detail">
           
-            <div class="feature-container" style="background-image: url('http://zuston.github.io/post-images/hello-gridea.png')">
-            </div>
-          
-          <h2 class="post-title">Hello Gridea</h2>
+          <h2 class="post-title">一种基于HDFS的统一分布式文件系统</h2>
           <div class="post-info post-detail-info">
-            <span><i class="icon-calendar-outline"></i> 2018-12-12</span>
-            
-              <span>
-                <i class="icon-pricetags-outline"></i>
-                
-                  <a href="http://zuston.github.io/tag/gridea">
-                    Gridea
-                    
-                  </a>
-                
-              </span>
+            <span><i class="icon-calendar-outline"></i> 2019-08-21</span>
             
           </div>
           <div class="post-content">
-            <p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
-✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+            <p>迫于公司的Hadoop集群越来越多（大概有20多个大大小小的集群），运维成本高昂，业务计算任务迁移成本高昂。往往一个集群的下线，需要业务配合迁移半年。其中包括数据同步HA验证，计算任务双跑等，耗费的成本和心力都很大。（这是官话，其实是领导让我做的！）</p>
 <!-- more -->
-<p><a href="https://github.com/getgridea/gridea">Github</a><br>
-<a href="http://hvenotes.fehey.com/">Gridea 主页</a><br>
-<a href="http://fehey.com/">示例网站</a></p>
-<h2 id="特性">特性👇</h2>
-<p>📝  你可以使用最酷的 <strong>Markdown</strong> 语法，进行快速创作</p>
-<p>🌉  你可以给文章配上精美的封面图和在文章任意位置插入图片</p>
-<p>🏷️  你可以对文章进行标签分组</p>
-<p>📋  你可以自定义菜单，甚至可以创建外部链接菜单</p>
-<p>💻  你可以在 <strong>𝖶𝗂𝗇𝖽𝗈𝗐𝗌</strong> 或 <strong>𝖬𝖺𝖼𝖮𝖲</strong> 设备上使用此客户端</p>
-<p>🌎  你可以使用 <strong>𝖦𝗂𝗍𝗁𝗎𝖻 𝖯𝖺𝗀𝖾𝗌</strong> 或 <strong>Coding Pages</strong> 向世界展示，未来将支持更多平台</p>
-<p>💬  你可以进行简单的配置，接入 <a href="https://github.com/gitalk/gitalk">Gitalk</a> 或 <a href="https://github.com/SukkaW/DisqusJS">DisqusJS</a> 评论系统</p>
-<p>🇬🇧  你可以使用<strong>中文简体</strong>或<strong>英语</strong></p>
-<p>🌁  你可以任意使用应用内默认主题或任意第三方主题，强大的主题自定义能力</p>
-<p>🖥  你可以自定义源文件夹，利用 OneDrive、百度网盘、iCloud、Dropbox 等进行多设备同步</p>
-<p>🌱 当然 <strong>Gridea</strong> 还很年轻，有很多不足，但请相信，它会不停向前🏃</p>
-<p>未来，它一定会成为你离不开的伙伴</p>
-<p>尽情发挥你的才华吧！</p>
-<p>😘 Enjoy~</p>
+<p>其实最初的想法是这样，我负责的是一个计算任务调度的系统。在开发的过程中，需要支持多集群间的计算漂移（其实就是任务在任意一个集群执行）和集群层面的 DAG 任务的 HA 保证，总体设计都出来了，为了支持前置数据和过程数据的完备，需要让业务人员主动做 checkpoint 的操作。然而这是一个理想状态，业务肯定是不会同意的。</p>
+<p>所以究其根本的原因来了，为什么需要做workflow 上的 checkPoint 呢？因为我们目前的系统无法支持HDFS的多集群间访问。为什么无法支持呢？因为业务的访问路径写法千奇百怪。同时他们在运行任务的时候，需要指定集群运行。这样造成了任务和数据其实是强绑定的。</p>
+<p>所以问题来了，需要做这样一个 workflow 的 ha, 就需要先解决统一集群存储的问题。因为就开始了本篇的工作。（原谅！背景及其冗长）</p>
+<p>统一集群存储的方案其实工业和学术界都有方案，比如 Hadoop 3.0 的 RBF 方案和 Berklery 的Alluxio, 基于上述两种方案都能实现统一命名空间的方案。但考虑到公司的现状，我们决定自研一套基于HDFS的统一分布式方案。</p>
+<p>待续！</p>
 
           </div>
         </div>
 
         
           <div class="next-post">
-            <a class="purple-link" href="http://zuston.github.io/post/hbase-bulkload-cai-keng">
+            <a class="purple-link" href="http://zuston.github.io/post/yi-ci-pai-cha-delegation-token-bug-de-guo-cheng">
               <h3 class="post-title">
-                下一篇：hbase bulkload 踩坑
+                下一篇：一次排查 Delegation token bug 的过程
               </h3>
             </a>
           </div>
