@@ -5,14 +5,14 @@
     
 <meta charset="utf-8" >
 
-<title>一种基于HDFS的统一分布式文件系统 | 沙茶</title>
-<meta name="description" content="爱也不同，梦也从容">
+<title>基于 Hadoop 的虚拟文件系统 | 沙茶</title>
+<meta name="description" content="">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1584176130756">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1584190246197">
 <link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
 
 
@@ -29,7 +29,7 @@
   <div class="site-header">
     <div class="left">
       <a href="http://zuston.github.io">
-        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1584176130756" alt="" width="32px" height="32px">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1584190246197" alt="" width="32px" height="32px">
       </a>
       <a href="http://zuston.github.io">
         <h1 class="site-title">沙茶</h1>
@@ -79,18 +79,29 @@
       <div class="content-container">
         <div class="post-detail">
           
-          <h2 class="post-title">一种基于HDFS的统一分布式文件系统</h2>
+          <h2 class="post-title">基于 Hadoop 的虚拟文件系统</h2>
           <div class="post-info post-detail-info">
             <span><i class="icon-calendar-outline"></i> 2019-08-21</span>
             
           </div>
           <div class="post-content">
-            <p>迫于公司的Hadoop集群越来越多（大概有20多个大大小小的集群），运维成本高昂，业务计算任务迁移成本高昂。往往一个集群的下线，需要业务配合迁移半年。其中包括数据同步HA验证，计算任务双跑等，耗费的成本和心力都很大。（这是官话，其实是领导让我做的！）</p>
+            <p>通过虚拟路径下，统一所有入口的访问，已实现 OSS/S3/HDFS 的数据统一访问</p>
 <!-- more -->
+<p>迫于公司的Hadoop集群越来越多（大概有20多个大大小小的集群），运维成本高昂，业务计算任务迁移成本高昂。往往一个集群的下线，需要业务配合迁移半年。其中包括数据同步HA验证，计算任务双跑等，耗费的成本和心力都很大</p>
 <p>其实最初的想法是这样，我负责的是一个计算任务调度的系统。在开发的过程中，需要支持多集群间的计算漂移（其实就是任务在任意一个集群执行）和集群层面的 DAG 任务的 HA 保证，总体设计都出来了，为了支持前置数据和过程数据的完备，需要让业务人员主动做 checkpoint 的操作。然而这是一个理想状态，业务肯定是不会同意的。</p>
 <p>所以究其根本的原因来了，为什么需要做workflow 上的 checkPoint 呢？因为我们目前的系统无法支持HDFS的多集群间访问。为什么无法支持呢？因为业务的访问路径写法千奇百怪。同时他们在运行任务的时候，需要指定集群运行。这样造成了任务和数据其实是强绑定的。</p>
-<p>所以问题来了，需要做这样一个 workflow 的 ha, 就需要先解决统一集群存储的问题。因为就开始了本篇的工作。（原谅！背景及其冗长）</p>
-<p>统一集群存储的方案其实工业和学术界都有方案，比如 Hadoop 3.0 的 RBF 方案和 Berklery 的Alluxio, 基于上述两种方案都能实现统一命名空间的方案。但考虑到公司的现状，我们决定自研一套基于HDFS的统一分布式方案。</p>
+<p>所以问题来了，需要做这样一个 workflow 的 HA, 就需要先解决统一集群存储访问入口的问题，因而就开始了本篇的工作</p>
+<p>统一集群存储的方案其实工业和学术界都有方案，比如 Hadoop 3.0 的 RBF 方案和 Berklery 的Alluxio, 基于上述两种方案都能实现统一命名空间的方案。但考虑到公司的现状，我们决定自研一套基于Hadoop 的统一入口方案，从吞吐量与稳定性考虑，从 client 端实现会是负载压力小和易于实现。</p>
+<h4 id="方案">方案</h4>
+<p>实现一个同 Hadoop FileSystem 通用接口的虚拟文件系统，将所有虚拟路径的挂载托管在外部服务上，比如 ZK/Web Server 等。完成之后的 virtual fs client 只需要用户添加到运行时的计算任务的 classpath 中，即可实现虚拟路径的访问</p>
+<h4 id="example">example</h4>
+<p>虚拟路径挂载如下所示<br>
+<code><br>
+vfs:///user/pig    -&gt;     hdfs://hadoop-jq-ns01/user/pig<br>
+vfs:///tmp/dog    -&gt;     hdfs://hadoop-guilin-namenode/user/dog<br>
+vfs:///hive/warehoust -&gt;  s3a://aws/hive</p>
+<p>FileSystem fs = FileSystem.create(&quot;vfs:///user/pig&quot;);<br>
+</code></p>
 <p>待续！</p>
 
           </div>
@@ -110,7 +121,7 @@
       
 
       <div class="site-footer">
-  <div class="slogan">爱也不同，梦也从容</div>
+  <div class="slogan"></div>
   <div class="social-container">
     
       
@@ -124,7 +135,7 @@
       
     
   </div>
-  Powered by <a href="https://github.com/zuston" target="_blank">airplane</a>
+  
 </div>
 
 

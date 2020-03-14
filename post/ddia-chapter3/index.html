@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>DDIA-Chapter3 数据存储与检索 | 沙茶</title>
+<meta name="description" content="">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1584190246197">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1584190246197" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">沙茶</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">DDIA-Chapter3 数据存储与检索</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-03-14</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="http://zuston.github.io/tag/oNmFuk4K4/">
+                    bigdata
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>数据存储与检索的相关底层实现与取舍</p>
+<!-- more -->
+<p>这一章节讲述了 <strong>数据存储与检索</strong> 的相关知识，总结一下就是：在不同的应用场景下，如何实现数据的快速检索，而采用不同的存储方案。  本章节讨论了两个存储引擎的实现，分别对应的是 OLAP 和 OLTP 的数据库，即日志结构的存储引擎（LSM Tree）和面向页的存储引擎（B Tree）。</p>
+<p>对于一个数据库而言核心就是数据结构，以下将步入正文</p>
+<h2 id="哈希索引来解决-append-log-file-存储的检索问题">哈希索引来解决 append log file 存储的检索问题</h2>
+<p>首先我们以 key-value 数据的存储来切入，尽管键值对数据并不是唯一的存储数据结构，但是随处可见且是更复杂索引的基础构造模块。<br>
+假设数据的存储全部采用追加式的文件组成，文件如下图，那么如何索引如何构造呢？最简单的就是使用 hashMap 来存储索引，key -&gt; 相应的数据的字节偏移量。<br>
+<img src="http://zuston.github.io/post-images/1584189155078.png" alt="" loading="lazy"></p>
+<h4 id="问题如何避免数据文件过大导致磁盘空间用尽">问题：如何避免数据文件过大，导致磁盘空间用尽？</h4>
+<p>因此我们需要将数据文件切分，即切分为不同的段文件。段文件有新旧之分，每个段文件分别对应维护一个 HashMap。<br>
+查找的场景下：从新到旧依次查找不同的 HashMap 即可；<br>
+写入的场景下：写入到最新的端的 HashMap 中，并 append 到最新的段文件中。<br>
+垃圾数据回收：新旧段文件，可以实现合并和压缩操作，将一些相同键的老数据 delete，只保留每个 key 的最新值, 形成新的段文件。此过程可以在后台进行，且对写入和查找不受影响. 如下图<br>
+<img src="http://zuston.github.io/post-images/1584189094916.png" alt="" loading="lazy"></p>
+<h4 id="局限性">局限性</h4>
+<ol>
+<li>哈希索引必须放置到内存中，如果 key 过多，就很难在内存中容纳。</li>
+<li>区间的查询效率不高，无法顺序扫描区间数据，比如 key 的区间为 A000000 -&gt; A000199 的数据</li>
+</ol>
+<h2 id="sstable-和-内存表">SSTable 和 内存表</h2>
+<p>上面讨论的哈希索引的日志段是按照写入顺序排列，并且对于出现在日志中的同一个键，后出现的值优于之前存在的值。<br>
+现在要求改变段文件的存储格式，按照 key 字典序来排序，这种格式称之为排序字符串表（SSTable) , 这就要求每个键在同一个段文件中只能出现一次。相比较上述的按照写入顺序 append 的日志段，有如下优点</p>
+<ol>
+<li>合并段文件更为高效，直接就是有序文件的合并排序，相当于磁盘上的归并算法。如果文件合并中，有相同的键，则以段文件时间点更新的为准</li>
+<li>比如在查找某个段文件中的某个特定键时，不再需要维护一个段文件中全部 key 的哈希索引，因为是有序存储的，只需要维护一个稀疏的哈希索引, 如下图<br>
+<img src="http://zuston.github.io/post-images/1584188946759.png" alt="" loading="lazy"></li>
+</ol>
+<h4 id="如何构建维护一个-sstables">如何构建维护一个 SSTables</h4>
+<p>基本工作流程如下</p>
+<ol>
+<li>当写入时，将写入数据添加到内存中的平衡树结构中，称之为 <strong>内存表</strong></li>
+<li>当内存表到达一个阈值时，将其作为 SSTables 存储到段文件中。因为1中已经维护了一个排序好的数据结构，写入即是有序的。当写入到段文件的过程中，可以继续重新新建一个内存表来提交写入服务，不受影响</li>
+<li>在处理读请求时，首先在内存表中查找该值，如果没有，则继续按照时间的新旧的顺序查找段文件的稀疏索引，以此类推，直到最后一个段文件或找到</li>
+<li>后台线程会周期性或触发式的合并与压缩段文件，来节约空间和减少检索时间</li>
+<li>为了避免内存表因为机器的崩溃或意外丢失，完全可以维护一个内存表日志，每个写入 append 到日志中。且这个文件的生命周期同内存表</li>
+</ol>
+<p>插图</p>
+<h4 id="那么什么是-lsm-tree">那么什么是 LSM-Tree</h4>
+<p>SSTable 和 内存表共同构成了 LOG-Structured Merge Tree.</p>
+<h4 id="性能优化">性能优化</h4>
+<p>当一个键不存在时，需要从内存表 -&gt; n 个段文件中进行查找，耗时良久</p>
+<p>解决方案：<strong>布隆过滤器</strong>， 将所有的值都经过 k 次 hash function 后填充到相应的 bit array 中，虽然存在一定程度的误判。造成不存在的 key，可能误判为存在，不过问题不大，大不了多几次IO</p>
+<figure data-type="image" tabindex="1"><img src="http://zuston.github.io/post-images/1584188622686.png" alt="" loading="lazy"></figure>
+<h2 id="b-trees">B-Trees</h2>
+<p>B树作为一种广泛使用的关系型数据库引擎的数据结构，非常流行<br>
+和 LSM-Tree 一样，B-Tree 同样保留排序的 KV 键值对，从而实现高效的查找和区间查询。但设计理念完全不同于 LSM-Tree。日志结构索引将数据库分解为可变大小且排序的段文件，相比之下，B-Tree 将数据库分解为固定大小的页，所以B-Tree 的每一层都是一页，相对于磁盘的固定大小的块。<br>
+插图<br>
+为了使数据库能从崩溃中恢复，或者分裂页时的引用时候不会丢失，所有的写入，都需要使用额外的数据结构来维护 WAL(write-ahead log), 称为重做日志。</p>
+<h4 id="为什么-mysql-innodb-使用-b-树">为什么 MySQL InnoDB 使用 B+ 树</h4>
+<p>InnoDB 存储引擎在绝大多数情况下使用 B+ 树建立索引，这是关系型数据库中查找最为常用和有效的索引，但是 B+ 树索引并不能找到一个给定键对应的具体值，它只能找到数据行对应的页，然后数据库把整个页读入到内存中，并在内存中查找具体的数据行(一页的数据量为 1-2000行左右，内存消耗时间一般忽略不计)。</p>
+<p>一般都会聚集索引（一般一张表有且仅有一个聚集索引，就是主键索引）和非聚集索引（辅助索引）的区别，聚集索引指的是叶子节点的记录中，会有对应行的完整记录。但是非聚集索引只会有对相关主键的记录，再次查找主键索引来获取数据。</p>
+<p>但是又为什么使用 B+ 树？这其中有两个问题，为什么不是哈希索引和B树呢？</p>
+<ol>
+<li>为什么不是哈希索引，因为hash无法达到范围查询的要求。</li>
+<li>为什么不是B树呢？同样是范围查询的问题。B 树与 B+ 树的最大区别就是，B 树可以在非叶结点中存储数据，但是 B+ 树的所有数据其实都存储在叶子节点中，当一个表底层的数据结构是 B 树时，如果是范围查询，则需要多次随机 I/O。而对于B+树时，就直接扫描到叶子节点，直接顺序扫描即可~</li>
+</ol>
+<figure data-type="image" tabindex="2"><img src="http://zuston.github.io/post-images/1584189261275.png" alt="" loading="lazy"></figure>
+<h4 id="为什么-mongodb-使用-b-树">为什么 MongoDb 使用 B 树</h4>
+<p>很简单，MongoDB 的设置里面对于范围查询不鼓励，且推荐的JSON设计结构就是不太需要范围查询的，就选择 B 树来降低单独主键查询的命中率，可能省去了n次IO。因为不需要到叶子节点才能获取数据~</p>
+<h2 id="对比-b-trees-和-lsm-tree">对比 B-Trees 和 LSM-Tree</h2>
+<p>根据经验来说，LSM-Tree 通常写入更快，B-Trees 读取更快。读取 LSM-Tree 会更慢一些，理论上需要读取内存表、多个段文件等。</p>
+<h4 id="lsm-tree-优点">LSM-Tree 优点</h4>
+<ol>
+<li>更高的写入吞吐量，磁盘顺序写比随机写效率和吞吐量更高</li>
+<li>较低的存储开销，因为能有序排列有助于压缩。同时能消除碎片化，相比较 B-Tree 的特性导致某些磁盘空间无法使用</li>
+</ol>
+<h4 id="lsm-tree-缺点">LSM-Tree 缺点</h4>
+<ol>
+<li>合并和压缩过程会引起抖动，导致正在进行的读写造成影响</li>
+<li>事务的隔离性在 B-Tree 树上更加好操控，通过键范围上的锁来实现的</li>
+</ol>
+<h1 id="列式存储-lsm-tree-应用">列式存储 （LSM-Tree 应用）</h1>
+<p>列存储的方案很简单，通常的行存储是一行的数据都放置在一起，所有的数据库优化都是面向行数据的。但是在 OLAP 场景下，有些事实表的列非常的多，但是每次查询只需要几十个列，如果按照行来存储的话，就造成了内存 oom 和效率的低下。因此，需要改进存储结构，将其变成列式存储。</p>
+<p>不要将一行中的所有值存储在一起，而是将每一列的值存储在一起。如果每个列的值存储于一个单独的文件中，查询的时候只需要读取每个文件中的特定的行数列，将它们组装在一起即可。</p>
+<figure data-type="image" tabindex="3"><img src="http://zuston.github.io/post-images/1584189317174.png" alt="" loading="lazy"></figure>
+<h4 id="列压缩">列压缩</h4>
+<p>使用 <strong>位图索引</strong></p>
+<h4 id="列压缩-2">列压缩</h4>
+<p>单独排列每个列的文件是没有意义的，因为这样就无法知道每一行的列值处于文件的哪一行。因此在n个列值的数据行中，我们需要选定排序键，比如第一顺位排序键A, 第二为B，则按此顺序进行文件排序。因此对于A来说，此文件可以压缩，因为此文件有序，可能有很多重复值。后续的列文件的压缩的可能性和意义都不大，因为不是有序的。</p>
+<h4 id="列存储的写入">列存储的写入</h4>
+<p>跟 LSM-Tree 一致，先写进内存表，后续到达阈值之后，再写入各个列的文件中</p>
+<h4 id="那么类似于-hbase-的列式存储是如何使用-lsm-tree-实现的呢">那么类似于 HBase 的列式存储是如何使用 LSM-Tree 实现的呢？</h4>
+<p>研究后再补充</p>
+<p><strong>参考</strong></p>
+<ol>
+<li>DDIA Book</li>
+<li>https://draveness.me/whys-the-design-mysql-b-plus-tree</li>
+<li>https://draveness.me/mysql-innodb.html</li>
+</ol>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/yi-chong-ji-yu-hdfs-de-tong-yi-fen-bu-shi-wen-jian-xi-tong/">
+              <h3 class="post-title">
+                下一篇：基于 Hadoop 的虚拟文件系统
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan"></div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
