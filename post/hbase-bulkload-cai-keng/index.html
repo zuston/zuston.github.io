@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1580197906693">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1584175573760">
 <link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
 
 
@@ -29,7 +29,7 @@
   <div class="site-header">
     <div class="left">
       <a href="http://zuston.github.io">
-        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1580197906693" alt="" width="32px" height="32px">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1584175573760" alt="" width="32px" height="32px">
       </a>
       <a href="http://zuston.github.io">
         <h1 class="site-title">沙茶</h1>
@@ -86,7 +86,7 @@
               <span>
                 <i class="icon-pricetags-outline"></i>
                 
-                  <a href="http://zuston.github.io/tag/oNmFuk4K4">
+                  <a href="http://zuston.github.io/tag/oNmFuk4K4/">
                     bigdata
                     
                   </a>
@@ -159,7 +159,7 @@ Caused by: java.lang.OutOfMemoryError: Java heap space
 	at org.apache.hadoop.mapreduce.task.reduce.Fetcher.copyFromHost(Fetcher.java:336)
 	at org.apache.hadoop.mapreduce.task.reduce.Fetcher.run(Fetcher.java:193)
 </code></pre>
-<p><strong>解决方案</strong>
+<p><strong>解决方案</strong><br>
 <em>shuffle 有部分需要占用map内存来进行，导致 oom,因此直接将 shuffle 到磁盘上做，降低shuffle占用container内存的比率</em></p>
 <pre><code class="language-java">job.getConfiguration().setStrings(&quot;mapreduce.reduce.shuffle.input.buffer.percent&quot;, &quot;0.1&quot;);
 </code></pre>
@@ -191,10 +191,10 @@ Caused by: org.apache.hadoop.util.DiskChecker$DiskErrorException: Could not find
 	at org.apache.hadoop.mapred.MapTask$MapOutputBuffer.access$900(MapTask.java:876)
 	at org.apache.hadoop.mapred.MapTask$MapOutputBuffer$SpillThread.run(MapTask.java:1532)
 </code></pre>
-<p><strong>思考：</strong>
-<em>这是 Could not find any valid local directory ， 猜测可能因为 map shuffle 很大数据到一台服务器上，磁盘空间不够了。回web ui上一看，只要一个 reduce 在运行。显然将数据量集中在一台上了，为什么只有一个 reduce 呢 ？</em>
-<strong>尝试：</strong>
-<em>直接设置了 <code>job.setNumReduceTasks(10)</code>，然而并不起作用，在方法外又设置了一遍，发现再跑报错直接显示 split region dont match，方法设置前后导致起作用了，说明在中间有方法已经有预设了reduce数目，从dont match 上来看，reduce的数目与region数目是相关的。</em>
+<p><strong>思考：</strong><br>
+<em>这是 Could not find any valid local directory ， 猜测可能因为 map shuffle 很大数据到一台服务器上，磁盘空间不够了。回web ui上一看，只要一个 reduce 在运行。显然将数据量集中在一台上了，为什么只有一个 reduce 呢 ？</em><br>
+<strong>尝试：</strong><br>
+<em>直接设置了 <code>job.setNumReduceTasks(10)</code>，然而并不起作用，在方法外又设置了一遍，发现再跑报错直接显示 split region dont match，方法设置前后导致起作用了，说明在中间有方法已经有预设了reduce数目，从dont match 上来看，reduce的数目与region数目是相关的。</em><br>
 <strong>代码</strong></p>
 <pre><code class="language-java">// bulk load
 public static Job HbaseQuickImportJobGnerator(Tool tool, Configuration configuration, String[] args, HTable table) throws IOException {
@@ -222,7 +222,7 @@ public static Job HbaseQuickImportJobGnerator(Tool tool, Configuration configura
     }
 }
 </code></pre>
-<p><strong>有必要探究下 bulkload 的机理：</strong>
+<p><strong>有必要探究下 bulkload 的机理：</strong><br>
 <em>主要方法就是HFileOutputFormat2，看下它的reduce数目是依据什么来判断的</em></p>
 <pre><code class="language-java">public static void configureIncrementalLoad(Job job, HTable table) throws IOException {
         configureIncrementalLoad(job, table, HFileOutputFormat2.class);
@@ -277,7 +277,7 @@ static void configurePartitioner(Job job, List&lt;ImmutableBytesWritable&gt; spl
         TotalOrderPartitioner.setPartitionFile(job.getConfiguration(), partitionsPath);
     }
 </code></pre>
-<p><em>仅仅从代码中看，可以确定 reduce 数目是由 region 的数目而来的，可以解释一开始就是 1 个reduce的疑惑。并且刚开始建表确实是没有指定分region</em>
+<p><em>仅仅从代码中看，可以确定 reduce 数目是由 region 的数目而来的，可以解释一开始就是 1 个reduce的疑惑。并且刚开始建表确实是没有指定分region</em><br>
 <strong>进一步解决：那么扩大 reduce 的个数，将解决现有问题。那么就可以hbase 预分区来扩大</strong></p>
 <h4 id="second">Second :</h4>
 <p><strong>建表时候分区，分2个步骤</strong></p>
@@ -285,16 +285,16 @@ static void configurePartitioner(Job job, List&lt;ImmutableBytesWritable&gt; spl
 <li>确定采样点</li>
 <li>根据采样点均分,从而 region 确定各个 startKey 来建立表</li>
 </ol>
-<p><strong>采样的方法</strong>
+<p><strong>采样的方法</strong><br>
 <em>方法有很多种，一般是确定采样数，或者是确定比例来采样。</em></p>
 <ol>
 <li>确定采样数为 n，可以采用堆排序，给每条记录随机生成一个竞争值 KEY, 维持一个大根堆。（适合小数据量）</li>
-<li>确定比例，就直接随机比例来采集样本数。（采样数据集大小不确定，只能估算）
+<li>确定比例，就直接随机比例来采集样本数。（采样数据集大小不确定，只能估算）<br>
 <em>可以参考 ： http://dongxicheng.org/data-mining/hadoop-sampling</em></li>
 </ol>
-<p>根据分区点，建立好表之后，继续跑代码
-<strong>遇到问题：</strong>
-*map reduce 过程中 reduce 一直被 KILL, 无法申请到资源，导致出现卡住的状况
+<p>根据分区点，建立好表之后，继续跑代码<br>
+<strong>遇到问题：</strong><br>
+*map reduce 过程中 reduce 一直被 KILL, 无法申请到资源，导致出现卡住的状况<br>
 **job 状态出现 ：ACCEPTED: waiting for AM container to be allocated, launched and register with RM  **</p>
 <pre><code class="language-java">2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Assigning container Container: [ContainerId: container_1514527612161_0053_03_000018, NodeId: slave4:42105, NodeHttpAddress: slave4:8042, Resource: &lt;memory:4096, vCores:1&gt;, Priority: 5, Token: Token { kind: ContainerToken, service: 10.10.0.139:42105 }, ] to fast fail map
 2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Assigned from earlierFailedMaps
@@ -310,12 +310,12 @@ static void configurePartitioner(Job job, List&lt;ImmutableBytesWritable&gt; spl
 2018-01-08 02:32:22,825 INFO [ContainerLauncher #1] org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl: Shuffle port returned by ContainerManager for attempt_1514527612161_0053_m_000013_2000 : 13562
 2018-01-08 02:32:22,825 INFO [AsyncDispatcher event handler] org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl: TaskAttempt: [attempt_1514527612161_0053_m_000013_2000] using containerId: [container_1514527612161_0053_03_000018 on NM: [slave4:42105]
 </code></pre>
-<p><em>部分 log 当时未留存，不是很全</em>
+<p><em>部分 log 当时未留存，不是很全</em><br>
 <em>查阅资料，看 log是推测 reduce和map互相竞争资源，互相 kill ，陷入死循环中，一直卡住</em></p>
 <p><em>解决方案</em><br>
 <em>修改 reduce 启动时机，等待 map 全部完成之后再启动 reduce, 减小 reduce &gt; copy 过程对于内存的占用</em><br>
 <code>mapreduce.job.reduce.slowstart.completedmaps 设置为 1.0</code></p>
-<p>参考资料 ：
+<p>参考资料 ：<br>
 http://blog.csdn.net/lipeng_bigdata/article/details/51285687<br>
 https://www.cnblogs.com/yueweimian/p/4667888.html<br>
 https://community.hortonworks.com/questions/27334/mapreduce-job-hang-waiting-for-am-container-to-be.html</p>
@@ -338,7 +338,7 @@ https://community.hortonworks.com/questions/27334/mapreduce-job-hang-waiting-for
 
         
           <div class="next-post">
-            <a class="purple-link" href="http://zuston.github.io/post/aop-jian-dan-shi-xian">
+            <a class="purple-link" href="http://zuston.github.io/post/aop-jian-dan-shi-xian/">
               <h3 class="post-title">
                 下一篇：AOP简单实现
               </h3>

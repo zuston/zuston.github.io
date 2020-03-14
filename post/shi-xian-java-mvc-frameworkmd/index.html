@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1580197906693">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1584175573760">
 <link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
 
 
@@ -29,7 +29,7 @@
   <div class="site-header">
     <div class="left">
       <a href="http://zuston.github.io">
-        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1580197906693" alt="" width="32px" height="32px">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1584175573760" alt="" width="32px" height="32px">
       </a>
       <a href="http://zuston.github.io">
         <h1 class="site-title">沙茶</h1>
@@ -86,7 +86,7 @@
               <span>
                 <i class="icon-pricetags-outline"></i>
                 
-                  <a href="http://zuston.github.io/tag/Wt3tKe04m">
+                  <a href="http://zuston.github.io/tag/Wt3tKe04m/">
                     Java
                     
                   </a>
@@ -99,8 +99,8 @@
 <!-- more -->
 <p>之前做的都不是 jvm 系列语言的开发，基本都是动态语言，比如 python , php , nodejs 一些。面对之后的工作，决定还是从事 java 语言这一方面的，还是需要学习一下。因为之前也写过 java ，所以上手难度比较低。看了一些书，差不多实现了一个 web framework ,还积累了一些 java 的基础知识需要记录下来，免得遗忘。</p>
 <h3 id="整体架构">整体架构</h3>
-<p>参照之前 php 的框架，如果自己实现 mvc 架构，基本就是根据 url 中传来的 action 参数和 controller 参数来实现动态调用类和方法。 php 直接就能将字符串调用函数和类，从而来实例化。这一点是动态语言的一点优势，不过 Python 并不支持如此调用。因此语言之间的差异还是存在的。对于 java 的话实现的 mvc 整体架构的话，技术上是需要用它的 <code>反射机制</code> 和 <code>类加载器</code> 来实现的，那么路由的实现，是采用 <code>注解</code> 来实现的。<br>
-对于实现 <code>AOP</code> 的话，是采用了 java 中的 cglib 来实现的动态代理，这里参照书中，实现了链式代理功能。<br>
+<p>参照之前 php 的框架，如果自己实现 mvc 架构，基本就是根据 url 中传来的 action 参数和 controller 参数来实现动态调用类和方法。 php 直接就能将字符串调用函数和类，从而来实例化。这一点是动态语言的一点优势，不过 Python 并不支持如此调用。因此语言之间的差异还是存在的。对于 java 的话实现的 mvc 整体架构的话，技术上是需要用它的 <code>反射机制</code> 和 <code>类加载器</code> 来实现的，那么路由的实现，是采用 <code>注解</code> 来实现的。<br><br>
+对于实现 <code>AOP</code> 的话，是采用了 java 中的 cglib 来实现的动态代理，这里参照书中，实现了链式代理功能。<br><br>
 对于实现 <code>ORM</code> 功能，在这里的调用时参照 php 里的 yii 框架中的 active record 。具体的实现，是采用建立 bean 类，继承整体自己实现的 baseOrm 来实现整体功能，具体可见代码。</p>
 <h3 id="实现方法">实现方法</h3>
 <p>我们知道，对于 java web 平台的开发，是建立在 java 的 servlet 基础上的，那么不同于 nginx 采用 php-fpm 来调用 php 代码，我们采用 tomcat 来开发的话，其实是 tomcat 实现了一个 web 服务器，对于每一个请求都会分配线程来执行，这边不再赘述。那么对于我们开发一个 web framework 还是实现路由，都是建立在获取请求参数的基础之上，因此我们要做的就是实现一个单 servlet 分发，从来根据请求来动态调用方法，渲染页面。<br></p>
@@ -425,12 +425,12 @@
 <h4 id="对于-aop-的实现是采用了动态代理的方式下一篇再详细讲一下">对于 AOP 的实现，是采用了动态代理的方式，下一篇再详细讲一下</h4>
 <h2 id="代码地址-httpsgithubcomzustontodosite-2">代码地址 》》 https://github.com/zuston/todoSite</h2>
 <h2 id="todo">TODO</h2>
-<p>[ ] baseOrm 重构和完善
-[ ] 实现IOC
-[ ] 完成 java web server
-[ ] 关于 Classloader.load() 和 Class.forName() 的区别
-[ ] 动态代理的设计和实现
-[ ] nio io多路复用模型
+<p>[ ] baseOrm 重构和完善<br>
+[ ] 实现IOC<br>
+[ ] 完成 java web server<br>
+[ ] 关于 Classloader.load() 和 Class.forName() 的区别<br>
+[ ] 动态代理的设计和实现<br>
+[ ] nio io多路复用模型<br>
 [ ] HashMap 的底层实现</p>
 
           </div>
@@ -438,7 +438,7 @@
 
         
           <div class="next-post">
-            <a class="purple-link" href="http://zuston.github.io/post/threadlocal-qian-xi">
+            <a class="purple-link" href="http://zuston.github.io/post/threadlocal-qian-xi/">
               <h3 class="post-title">
                 下一篇：ThreadLocal浅析
               </h3>

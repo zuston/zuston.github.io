@@ -1,0 +1,1309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>http://zuston.github.io</id>
+    <title>沙茶</title>
+    <updated>2020-03-14T08:46:31.397Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="http://zuston.github.io"/>
+    <link rel="self" href="http://zuston.github.io/atom.xml"/>
+    <subtitle>爱也不同，梦也从容</subtitle>
+    <logo>http://zuston.github.io/images/avatar.png</logo>
+    <icon>http://zuston.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2020, 沙茶</rights>
+    <entry>
+        <title type="html"><![CDATA[一种基于HDFS的统一分布式文件系统]]></title>
+        <id>http://zuston.github.io/post/yi-chong-ji-yu-hdfs-de-tong-yi-fen-bu-shi-wen-jian-xi-tong/</id>
+        <link href="http://zuston.github.io/post/yi-chong-ji-yu-hdfs-de-tong-yi-fen-bu-shi-wen-jian-xi-tong/">
+        </link>
+        <updated>2019-08-21T12:39:24.000Z</updated>
+        <summary type="html"><![CDATA[<p>迫于公司的Hadoop集群越来越多（大概有20多个大大小小的集群），运维成本高昂，业务计算任务迁移成本高昂。往往一个集群的下线，需要业务配合迁移半年。其中包括数据同步HA验证，计算任务双跑等，耗费的成本和心力都很大。（这是官话，其实是领导让我做的！）</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>迫于公司的Hadoop集群越来越多（大概有20多个大大小小的集群），运维成本高昂，业务计算任务迁移成本高昂。往往一个集群的下线，需要业务配合迁移半年。其中包括数据同步HA验证，计算任务双跑等，耗费的成本和心力都很大。（这是官话，其实是领导让我做的！）</p>
+<!-- more -->
+<p>其实最初的想法是这样，我负责的是一个计算任务调度的系统。在开发的过程中，需要支持多集群间的计算漂移（其实就是任务在任意一个集群执行）和集群层面的 DAG 任务的 HA 保证，总体设计都出来了，为了支持前置数据和过程数据的完备，需要让业务人员主动做 checkpoint 的操作。然而这是一个理想状态，业务肯定是不会同意的。</p>
+<p>所以究其根本的原因来了，为什么需要做workflow 上的 checkPoint 呢？因为我们目前的系统无法支持HDFS的多集群间访问。为什么无法支持呢？因为业务的访问路径写法千奇百怪。同时他们在运行任务的时候，需要指定集群运行。这样造成了任务和数据其实是强绑定的。</p>
+<p>所以问题来了，需要做这样一个 workflow 的 ha, 就需要先解决统一集群存储的问题。因为就开始了本篇的工作。（原谅！背景及其冗长）</p>
+<p>统一集群存储的方案其实工业和学术界都有方案，比如 Hadoop 3.0 的 RBF 方案和 Berklery 的Alluxio, 基于上述两种方案都能实现统一命名空间的方案。但考虑到公司的现状，我们决定自研一套基于HDFS的统一分布式方案。</p>
+<p>待续！</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Hello Gridea]]></title>
+        <id>http://zuston.github.io/post/hello-gridea/</id>
+        <link href="http://zuston.github.io/post/hello-gridea/">
+        </link>
+        <updated>2018-12-11T16:00:00.000Z</updated>
+        <summary type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+<!-- more -->
+<p><a href="https://github.com/getgridea/gridea">Github</a><br>
+<a href="http://hvenotes.fehey.com/">Gridea 主页</a><br>
+<a href="http://fehey.com/">示例网站</a></p>
+<h2 id="特性">特性👇</h2>
+<p>📝  你可以使用最酷的 <strong>Markdown</strong> 语法，进行快速创作</p>
+<p>🌉  你可以给文章配上精美的封面图和在文章任意位置插入图片</p>
+<p>🏷️  你可以对文章进行标签分组</p>
+<p>📋  你可以自定义菜单，甚至可以创建外部链接菜单</p>
+<p>💻  你可以在 <strong>𝖶𝗂𝗇𝖽𝗈𝗐𝗌</strong> 或 <strong>𝖬𝖺𝖼𝖮𝖲</strong> 设备上使用此客户端</p>
+<p>🌎  你可以使用 <strong>𝖦𝗂𝗍𝗁𝗎𝖻 𝖯𝖺𝗀𝖾𝗌</strong> 或 <strong>Coding Pages</strong> 向世界展示，未来将支持更多平台</p>
+<p>💬  你可以进行简单的配置，接入 <a href="https://github.com/gitalk/gitalk">Gitalk</a> 或 <a href="https://github.com/SukkaW/DisqusJS">DisqusJS</a> 评论系统</p>
+<p>🇬🇧  你可以使用<strong>中文简体</strong>或<strong>英语</strong></p>
+<p>🌁  你可以任意使用应用内默认主题或任意第三方主题，强大的主题自定义能力</p>
+<p>🖥  你可以自定义源文件夹，利用 OneDrive、百度网盘、iCloud、Dropbox 等进行多设备同步</p>
+<p>🌱 当然 <strong>Gridea</strong> 还很年轻，有很多不足，但请相信，它会不停向前🏃</p>
+<p>未来，它一定会成为你离不开的伙伴</p>
+<p>尽情发挥你的才华吧！</p>
+<p>😘 Enjoy~</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[hbase bulkload 踩坑]]></title>
+        <id>http://zuston.github.io/post/hbase-bulkload-cai-keng/</id>
+        <link href="http://zuston.github.io/post/hbase-bulkload-cai-keng/">
+        </link>
+        <updated>2018-01-09T14:01:28.000Z</updated>
+        <content type="html"><![CDATA[<!-- more --> 
+<p>最近天天在实验室捣鼓一个大数据的项目，前期虽说数据量不是很大，但也算是跑了一个11台机器的集群。在实施之前就预料到了肯定是艰难险阻。毕竟万事开头难，然后中间难，最后结尾难 😢</p>
+<p>本文记录下在进行 hbase 导入的时候，采用的策略和遇到的坑。也不单单是 hbase 的缘故，管理一个集群上遇到数据量比较大的情况，各种问题都有，着实应接不暇。</p>
+<h4 id="背景">背景 ：</h4>
+<p>源数据是以 oracle 的分库分表的形式存放，加之数据量很大，每天都是百万级别的增量。搞定 oracle 的过程先痛苦的按下不表了。</p>
+<h4 id="需求">需求 ：</h4>
+<p>根据源数据，最终实现一个大数据下实时预测的功能。</p>
+<h4 id="进度">进度 ：</h4>
+<p>已经将 oracle 中的源数据导出到文本，进入 hdfs 中，用 mr 已经进行了数据的过滤和抽取分析，最后分析结果都已入库。暂且流程化分析不讲。</p>
+<p>现在因为要进行快速验证，需要对源数据依据某些抽取条件进行快速查找，吞吐量要高。传统的关系型数据库似乎没有很好的分布式的方案，上手成本低一点，同时我们也不需要强事务，就直接采用 hbase 来作为数据仓库。因此就需要将源数据稍作处理导入进 hbase 中。</p>
+<h4 id="方案">方案 ：</h4>
+<ol>
+<li>
+<p>直接采用 Put 的方式，是采用 mr 的方式单独用 map 来 put 进库 （小规模数据可用）</p>
+</li>
+<li>
+<p>采用 hbase 自带的 ImportTsv 工具 (不适用于 rowkey 变化组合的情况)</p>
+</li>
+<li>
+<p><strong>采用 bulkload 的方式，先生成 HFile 再用 completeBulkload 导入到 hbase 中 （符合我所要 rowkey 自定义和大规模数据快速导入的需求，但是不能增量进库）</strong></p>
+</li>
+</ol>
+<h3 id="实施过程">实施过程 ：</h3>
+<h4 id="first">First :</h4>
+<p>直接 hbase 建立表，采用 mr 的方式生成 HFile。代码均在 github 上</p>
+<ol>
+<li><strong>遇到问题</strong></li>
+</ol>
+<pre><code class="language-java">2018-01-02 19:19:10,475 WARN [main] org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Possibly transient ZooKeeper, quorum=localhost:2181, exception=org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /hbase/meta-region-server
+2018-01-02 19:19:10,475 INFO [main] org.apache.hadoop.hbase.util.RetryCounter: Sleeping 8000ms before retry #3...
+2018-01-02 19:19:11,475 INFO [main-SendThread(localhost:2181)] org.apache.zookeeper.ClientCnxn: Opening socket connection to server localhost/127.0.0.1:2181. Will not attempt to authenticate using SASL (unknown error)
+2018-01-02 19:19:11,475 WARN [main-SendThread(localhost:2181)] org.apache.zookeeper.ClientCnxn: Session 0x0 for server null, unexpected error, closing socket connection and attempting reconnect
+java.net.ConnectException: Connection refused
+at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:717)
+at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:361)
+at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1081)
+</code></pre>
+<p><strong>解决方案</strong> ：增加 hbase 的配置</p>
+<pre><code class="language-java">this.getConf().set(&quot;hbase.master&quot;, &quot;master:60000&quot;);
+this.getConf().set(&quot;hbase.zookeeper.quorum&quot;,&quot;slave1,slave2,slave3&quot;);
+</code></pre>
+<ol start="2">
+<li><strong>遇到问题</strong><br>
+<em>Shuffle 过程中 Java Heap Space oom</em></li>
+</ol>
+<pre><code class="language-java">Error: org.apache.hadoop.mapreduce.task.reduce.Shuffle$ShuffleError: error in shuffle in fetcher#2
+	at org.apache.hadoop.mapreduce.task.reduce.Shuffle.run(Shuffle.java:134)
+	at org.apache.hadoop.mapred.ReduceTask.run(ReduceTask.java:376)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:164)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1746)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:158)
+Caused by: java.lang.OutOfMemoryError: Java heap space
+	at org.apache.hadoop.io.BoundedByteArrayOutputStream.&lt;init&gt;(BoundedByteArrayOutputStream.java:56)
+	at org.apache.hadoop.io.BoundedByteArrayOutputStream.&lt;init&gt;(BoundedByteArrayOutputStream.java:46)
+	at org.apache.hadoop.mapreduce.task.reduce.InMemoryMapOutput.&lt;init&gt;(InMemoryMapOutput.java:63)
+	at org.apache.hadoop.mapreduce.task.reduce.MergeManagerImpl.unconditionalReserve(MergeManagerImpl.java:309)
+	at org.apache.hadoop.mapreduce.task.reduce.MergeManagerImpl.reserve(MergeManagerImpl.java:299)
+	at org.apache.hadoop.mapreduce.task.reduce.Fetcher.copyMapOutput(Fetcher.java:514)
+	at org.apache.hadoop.mapreduce.task.reduce.Fetcher.copyFromHost(Fetcher.java:336)
+	at org.apache.hadoop.mapreduce.task.reduce.Fetcher.run(Fetcher.java:193)
+</code></pre>
+<p><strong>解决方案</strong><br>
+<em>shuffle 有部分需要占用map内存来进行，导致 oom,因此直接将 shuffle 到磁盘上做，降低shuffle占用container内存的比率</em></p>
+<pre><code class="language-java">job.getConfiguration().setStrings(&quot;mapreduce.reduce.shuffle.input.buffer.percent&quot;, &quot;0.1&quot;);
+</code></pre>
+<ol start="3">
+<li><strong>更改比率继续重新运行，遇到问题</strong></li>
+</ol>
+<pre><code class="language-java">Error: java.io.IOException: Spill failed
+	at org.apache.hadoop.mapred.MapTask$MapOutputBuffer.checkSpillException(MapTask.java:1562)
+	at org.apache.hadoop.mapred.MapTask$MapOutputBuffer.collect(MapTask.java:1085)
+	at org.apache.hadoop.mapred.MapTask$NewOutputCollector.write(MapTask.java:715)
+	at org.apache.hadoop.mapreduce.task.TaskInputOutputContextImpl.write(TaskInputOutputContextImpl.java:89)
+	at org.apache.hadoop.mapreduce.lib.map.WrappedMapper$Context.write(WrappedMapper.java:112)
+	at io.github.zuston.ane.Ewb.EwbImporterMr$EwbImporterMapper.map(EwbImporterMr.java:63)
+	at io.github.zuston.ane.Ewb.EwbImporterMr$EwbImporterMapper.map(EwbImporterMr.java:39)
+	at org.apache.hadoop.mapreduce.Mapper.run(Mapper.java:146)
+	at org.apache.hadoop.mapred.MapTask.runNewMapper(MapTask.java:787)
+	at org.apache.hadoop.mapred.MapTask.run(MapTask.java:341)
+	at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:164)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1746)
+	at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:158)
+Caused by: org.apache.hadoop.util.DiskChecker$DiskErrorException: Could not find any valid local directory for attempt_1514527612161_0048_m_000030_0_spill_5.out
+	at org.apache.hadoop.fs.LocalDirAllocator$AllocatorPerContext.getLocalPathForWrite(LocalDirAllocator.java:402)
+	at org.apache.hadoop.fs.LocalDirAllocator.getLocalPathForWrite(LocalDirAllocator.java:150)
+	at org.apache.hadoop.fs.LocalDirAllocator.getLocalPathForWrite(LocalDirAllocator.java:131)
+	at org.apache.hadoop.mapred.YarnOutputFiles.getSpillFileForWrite(YarnOutputFiles.java:159)
+	at org.apache.hadoop.mapred.MapTask$MapOutputBuffer.sortAndSpill(MapTask.java:1592)
+	at org.apache.hadoop.mapred.MapTask$MapOutputBuffer.access$900(MapTask.java:876)
+	at org.apache.hadoop.mapred.MapTask$MapOutputBuffer$SpillThread.run(MapTask.java:1532)
+</code></pre>
+<p><strong>思考：</strong><br>
+<em>这是 Could not find any valid local directory ， 猜测可能因为 map shuffle 很大数据到一台服务器上，磁盘空间不够了。回web ui上一看，只要一个 reduce 在运行。显然将数据量集中在一台上了，为什么只有一个 reduce 呢 ？</em><br>
+<strong>尝试：</strong><br>
+<em>直接设置了 <code>job.setNumReduceTasks(10)</code>，然而并不起作用，在方法外又设置了一遍，发现再跑报错直接显示 split region dont match，方法设置前后导致起作用了，说明在中间有方法已经有预设了reduce数目，从dont match 上来看，reduce的数目与region数目是相关的。</em><br>
+<strong>代码</strong></p>
+<pre><code class="language-java">// bulk load
+public static Job HbaseQuickImportJobGnerator(Tool tool, Configuration configuration, String[] args, HTable table) throws IOException {
+        configuration.set(&quot;hbase.master&quot;, &quot;master:60000&quot;);
+        configuration.set(&quot;hbase.zookeeper.quorum&quot;,&quot;slave1,slave2,slave3&quot;);
+        Job job = new Job(configuration);
+
+        job.setJarByClass(tool.getClass());
+        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        job.setMapOutputValueClass(Put.class);
+
+        job.setSpeculativeExecution(false);
+        job.setReduceSpeculativeExecution(false);
+
+        job.setInputFormatClass(TextInputFormat.class);
+        job.setOutputFormatClass(HFileOutputFormat2.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        table = new HTable(configuration, args[2]);
+        HFileOutputFormat2.configureIncrementalLoad(job, table);
+
+        return job;
+    }
+}
+</code></pre>
+<p><strong>有必要探究下 bulkload 的机理：</strong><br>
+<em>主要方法就是HFileOutputFormat2，看下它的reduce数目是依据什么来判断的</em></p>
+<pre><code class="language-java">public static void configureIncrementalLoad(Job job, HTable table) throws IOException {
+        configureIncrementalLoad(job, table, HFileOutputFormat2.class);
+    }
+static void configureIncrementalLoad(Job job, HTable table, Class&lt;? extends OutputFormat&lt;?, ?&gt;&gt; cls) throws IOException {
+        Configuration conf = job.getConfiguration();
+        // ImmutableBytesWritable.class 必须指定为不可变的，即是 rowkey
+        job.setOutputKeyClass(ImmutableBytesWritable.class);
+        // 也可以是 PUT 对象
+        job.setOutputValueClass(KeyValue.class);
+        job.setOutputFormatClass(cls);
+        // 分 map 的输出类型进行 reduce sort, hbase 存储的顺序也是按照字典序排列，reduce 做的也就是输出有序文件。
+        // 此处可以看到 map 输出类型分为 KeyValue, Put, Text 三种均可
+        if(KeyValue.class.equals(job.getMapOutputValueClass())) {
+            job.setReducerClass(KeyValueSortReducer.class);
+        } else if(Put.class.equals(job.getMapOutputValueClass())) {
+            job.setReducerClass(PutSortReducer.class);
+        } else if(Text.class.equals(job.getMapOutputValueClass())) {
+            job.setReducerClass(TextSortReducer.class);
+        } else {
+            LOG.warn(&quot;Unknown map output value type:&quot; + job.getMapOutputValueClass());
+        }
+        conf.setStrings(&quot;io.serializations&quot;, new String[]{conf.get(&quot;io.serializations&quot;), MutationSerialization.class.getName(), ResultSerialization.class.getName(), KeyValueSerialization.class.getName()});
+        LOG.info(&quot;Looking up current regions for table &quot; + Bytes.toString(table.getTableName()));
+        // 获取 region 数目，startKeys 即为每个region的起始位置
+        List startKeys = getRegionStartKeys(table);
+        LOG.info(&quot;Configuring &quot; + startKeys.size() + &quot; reduce partitions &quot; + &quot;to match current region count&quot;);
+        // 将 job reduce 数目设置为 region 数目
+        job.setNumReduceTasks(startKeys.size());
+       // 按照 hbase 的存储格式写入HDFS 中，具体看下面方法
+        configurePartitioner(job, startKeys);
+        configureCompression(table, conf);
+        configureBloomType(table, conf);
+        // 块大小匹配 hbase 的 块大小
+        configureBlockSize(table, conf);
+        // 编码格式设置为一致
+        configureDataBlockEncoding(table, conf);
+        TableMapReduceUtil.addDependencyJars(job);
+        TableMapReduceUtil.initCredentials(job);
+        LOG.info(&quot;Incremental table &quot; + Bytes.toString(table.getTableName()) + &quot; output configured.&quot;);
+    }
+static void configurePartitioner(Job job, List&lt;ImmutableBytesWritable&gt; splitPoints) throws IOException {
+        FileSystem fs = FileSystem.get(job.getConfiguration());
+        //  hbase 已有的分区文件暂存在 hdfs 
+        Path partitionsPath = new Path(&quot;/tmp&quot;, &quot;partitions_&quot; + UUID.randomUUID());
+        fs.makeQualified(partitionsPath);
+        fs.deleteOnExit(partitionsPath);
+        // 写入hdfs，根据分区点写。对于每个分区点采用的是 TreeSet,将所有的分区点 startKeys 排序
+        writePartitions(job.getConfiguration(), partitionsPath, splitPoints);
+        // 设定 partitioner 为全局有序，分区点即为 hbase 的分 region 文件，这样 reduce 的时候输出文件都是有序的，符合 hbase 的设计
+        job.setPartitionerClass(TotalOrderPartitioner.class);
+        TotalOrderPartitioner.setPartitionFile(job.getConfiguration(), partitionsPath);
+    }
+</code></pre>
+<p><em>仅仅从代码中看，可以确定 reduce 数目是由 region 的数目而来的，可以解释一开始就是 1 个reduce的疑惑。并且刚开始建表确实是没有指定分region</em><br>
+<strong>进一步解决：那么扩大 reduce 的个数，将解决现有问题。那么就可以hbase 预分区来扩大</strong></p>
+<h4 id="second">Second :</h4>
+<p><strong>建表时候分区，分2个步骤</strong></p>
+<ol>
+<li>确定采样点</li>
+<li>根据采样点均分,从而 region 确定各个 startKey 来建立表</li>
+</ol>
+<p><strong>采样的方法</strong><br>
+<em>方法有很多种，一般是确定采样数，或者是确定比例来采样。</em></p>
+<ol>
+<li>确定采样数为 n，可以采用堆排序，给每条记录随机生成一个竞争值 KEY, 维持一个大根堆。（适合小数据量）</li>
+<li>确定比例，就直接随机比例来采集样本数。（采样数据集大小不确定，只能估算）<br>
+<em>可以参考 ： http://dongxicheng.org/data-mining/hadoop-sampling</em></li>
+</ol>
+<p>根据分区点，建立好表之后，继续跑代码<br>
+<strong>遇到问题：</strong><br>
+*map reduce 过程中 reduce 一直被 KILL, 无法申请到资源，导致出现卡住的状况<br>
+**job 状态出现 ：ACCEPTED: waiting for AM container to be allocated, launched and register with RM  **</p>
+<pre><code class="language-java">2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Assigning container Container: [ContainerId: container_1514527612161_0053_03_000018, NodeId: slave4:42105, NodeHttpAddress: slave4:8042, Resource: &lt;memory:4096, vCores:1&gt;, Priority: 5, Token: Token { kind: ContainerToken, service: 10.10.0.139:42105 }, ] to fast fail map
+2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Assigned from earlierFailedMaps
+2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Assigned container container_1514527612161_0053_03_000018 to attempt_1514527612161_0053_m_000013_2000
+2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Recalculating schedule, headroom=&lt;memory:2048, vCores:1&gt;
+2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: completedMapPercent 0.32871974 totalResourceLimit:&lt;memory:30720, vCores:8&gt; finalMapResourceLimit:&lt;memory:20622, vCores:6&gt; finalReduceResourceLimit:&lt;memory:10098, vCores:2&gt; netScheduledMapResource:&lt;memory:794624, vCores:194&gt; netScheduledReduceResource:&lt;memory:8192, vCores:1&gt;
+2018-01-08 02:32:22,816 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: After Scheduling: PendingReds:6 ScheduledMaps:187 ScheduledReds:1 AssignedMaps:7 AssignedReds:0 CompletedMaps:95 CompletedReds:4 ContAlloc:17 ContRel:0 HostLocal:7 RackLocal:0
+2018-01-08 02:32:22,817 INFO [AsyncDispatcher event handler] org.apache.hadoop.yarn.util.RackResolver: Resolved slave4 to /default-rack
+2018-01-08 02:32:22,817 INFO [AsyncDispatcher event handler] org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl: attempt_1514527612161_0053_m_000013_2000 TaskAttempt Transitioned from UNASSIGNED to ASSIGNED
+2018-01-08 02:32:22,817 INFO [ContainerLauncher #1] org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl: Processing the event EventType: CONTAINER_REMOTE_LAUNCH for container container_1514527612161_0053_03_000018 taskAttempt attempt_1514527612161_0053_m_000013_2000
+2018-01-08 02:32:22,817 INFO [ContainerLauncher #1] org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl: Launching attempt_1514527612161_0053_m_000013_2000
+2018-01-08 02:32:22,817 INFO [ContainerLauncher #1] org.apache.hadoop.yarn.client.api.impl.ContainerManagementProtocolProxy: Opening proxy : slave4:42105
+2018-01-08 02:32:22,825 INFO [ContainerLauncher #1] org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl: Shuffle port returned by ContainerManager for attempt_1514527612161_0053_m_000013_2000 : 13562
+2018-01-08 02:32:22,825 INFO [AsyncDispatcher event handler] org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl: TaskAttempt: [attempt_1514527612161_0053_m_000013_2000] using containerId: [container_1514527612161_0053_03_000018 on NM: [slave4:42105]
+</code></pre>
+<p><em>部分 log 当时未留存，不是很全</em><br>
+<em>查阅资料，看 log是推测 reduce和map互相竞争资源，互相 kill ，陷入死循环中，一直卡住</em></p>
+<p><em>解决方案</em><br>
+<em>修改 reduce 启动时机，等待 map 全部完成之后再启动 reduce, 减小 reduce &gt; copy 过程对于内存的占用</em><br>
+<code>mapreduce.job.reduce.slowstart.completedmaps 设置为 1.0</code></p>
+<p>参考资料 ：<br>
+http://blog.csdn.net/lipeng_bigdata/article/details/51285687<br>
+https://www.cnblogs.com/yueweimian/p/4667888.html<br>
+https://community.hortonworks.com/questions/27334/mapreduce-job-hang-waiting-for-am-container-to-be.html</p>
+<blockquote>
+<p>遇到问题:<br>
+<em>修改参数过后又遇到问题，发现在将要成功之际，job完成度到 90%时候，reduce 全部被 kill 掉，又开始 map过程</em><br>
+<em>此时发现有一个节点挂掉了，同时 node 全部为 unhealty 状态</em></p>
+</blockquote>
+<p><em>思考</em><br>
+<em>在上述 HFileOutputFormat2 的代码中看到 reduce 过程要占用很大的磁盘空间，并且对全局排序，数据分布不均匀则导致单点执行时间过程。猜测是不是磁盘容量不够</em></p>
+<p><strong>解决方案</strong></p>
+<ol>
+<li>重启挂掉的节点</li>
+<li>将节点的健康检查阈值降低，暂且挨过这一次处理</li>
+</ol>
+<hr>
+**待补充**]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[AOP简单实现]]></title>
+        <id>http://zuston.github.io/post/aop-jian-dan-shi-xian/</id>
+        <link href="http://zuston.github.io/post/aop-jian-dan-shi-xian/">
+        </link>
+        <updated>2016-12-19T15:07:52.000Z</updated>
+        <summary type="html"><![CDATA[<p>tomorrow is another day</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>tomorrow is another day</p>
+<!-- more -->
+<p>上一篇所实现web framework 里面的 AOP 就是这一篇要详细叙述的，并且叙述如何实现一个链式代理。<br>
+所谓的 <code>AOP</code> 其实就是 <code>依赖注入</code> ，我们一般也称之为 <code>控制反转</code> 。 其实我觉得都有这个意思，<code>注入</code>这个词很好的诠释了 AOP 的思想，说明我们可以对于某些请求方法来进行监控和 filter ， 而 <code>反转</code> 这个词正是说明在实现方式上我们采用的是反射。我们先来看静态代理的实现。</p>
+<h3 id="静态代理">静态代理</h3>
+<p>静态代理就是实现一个类的接口方法的代理，优点是简单，缺点是对于很多类需要一个个实现每一个不同的代理。繁琐异常</p>
+<pre><code class="language-java">public interface animal{
+    void eat();
+}
+
+public class dog implements animal{
+    public void eat(){
+        System.out.println(&quot;dog is eating&quot;);
+    }
+}
+
+public class proxy implements animal{
+    public animal object;
+    public proxy(animal object){
+        this.object = object;
+    }
+
+    public void eat(){
+        System.out.println(&quot;before&quot;);
+        this.object.eat();
+        System.out.println(&quot;after&quot;);
+    }
+}
+</code></pre>
+<h3 id="动态代理">动态代理</h3>
+<h4 id="jdk-方式">jdk 方式</h4>
+<h4 id="代码地址-httpsgithubcomzustontodositeblobmastersrcmaintestjavalearningthreadingaopjava">代码地址 》》 https://github.com/zuston/todoSite/blob/master/src/main/test/javaLearning/threading/aop.java</h4>
+<pre><code class="language-java">public class aop {
+
+    public static void main(String[] args) {
+        //此处输出也会有before和after，怀疑是sout调用了tostring,事实证明是的
+        System.out.println(new proxy(new helloImpl()).getProxy());
+        hello action = new proxy(new helloImpl()).getProxy();
+        action.say();
+    }
+}
+
+
+interface hello{
+    public void say();
+}
+
+
+class helloImpl implements hello{
+    public helloImpl(){
+        System.out.println(&quot;init the instance&quot;);
+    }
+    public void say(){
+        System.out.println(&quot;hello!&quot;);
+    }
+
+    @Override
+    public String toString() {
+        System.out.println(&quot;tostring invoke&quot;);
+        return super.toString();
+    }
+}
+
+
+class proxy implements InvocationHandler{
+
+    public Object oj = null;
+
+    public proxy(Object oj){
+        this.oj = oj;
+    }
+
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        System.out.println(&quot;before&quot;);
+        Object res = method.invoke(oj,args);
+        System.out.println(&quot;after&quot;);
+        return res;
+    }
+
+    public &lt;T&gt; T getProxy(){
+        return (T) Proxy.newProxyInstance(
+                oj.getClass().getClassLoader(),
+                oj.getClass().getInterfaces(),
+                this
+        );
+    }
+}
+</code></pre>
+<h3 id="链式动态代理的实现">链式动态代理的实现</h3>
+<h4 id="代码地址-httpsgithubcomzustontodositeblobmastersrcmaintestframeworkaoptestjava">代码地址 》》https://github.com/zuston/todoSite/blob/master/src/main/test/framework/aopTest.java</h4>
+<h4 id="一到晚上就懒得写了">一到晚上就懒得写了</h4>
+<pre><code class="language-java">/**
+ * 实现多重aop的调用，因为cglib不支持
+ */
+public class aopTest {
+
+    public static void main(String[] args) {
+
+        fuckImpl fl = new fuckImpl();
+        final List&lt;baseProxy&gt; listProxy = new ArrayList&lt;&gt;();
+        listProxy.add(new aProxy());
+        listProxy.add(new bProxy());
+
+        hello sHello = (hello) Enhancer.create(fl.getClass(), new MethodInterceptor() {
+            @Override
+            public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+                Object res = new proxyChain(listProxy,o,method,objects,methodProxy).doChain();
+                return res;
+            }
+        });
+        sHello.say();
+    }
+}
+
+class proxyChain{
+    List&lt;baseProxy&gt; listProxy = new ArrayList&lt;&gt;();
+    Object o;
+    Method method;
+    Object[] objects;
+    MethodProxy methodProxy;
+
+    int index = 0;
+
+    public proxyChain(List&lt;baseProxy&gt; listProxy, Object o, Method method, Object[] objects, MethodProxy methodProxy) {
+        this.listProxy = listProxy;
+        this.o = o;
+        this.method = method;
+        this.objects = objects;
+        this.methodProxy = methodProxy;
+    }
+
+    public Object doChain() throws Throwable {
+        Object res = null;
+        if(index&lt;listProxy.size()){
+            res = listProxy.get(index++).doProxy(this);
+        }else{
+            res = methodProxy.invokeSuper(o,objects);
+        }
+        return res;
+    }
+}
+
+
+interface hello{
+    void say();
+}
+
+class helloImpl implements hello{
+
+    @Override
+    public void say() {
+        System.out.println(&quot;hello world&quot;);
+    }
+}
+
+
+class fuckImpl implements hello{
+
+    @Override
+    public void say() {
+        System.out.println(&quot;fuck world&quot;);
+    }
+}
+
+class baseProxy{
+    public Object doProxy(proxyChain chain) throws Throwable {
+        before();
+        //递归调用
+        Object res = chain.doChain();
+        after();
+        return res;
+    }
+
+    public void before(){
+
+    }
+
+    public void after(){
+
+    }
+}
+
+
+class aProxy extends baseProxy{
+    public void before(){
+        System.out.println(&quot;a.before&quot;);
+    }
+
+    public void after(){
+        System.out.println(&quot;a.after&quot;);
+    }
+}
+
+
+class bProxy extends baseProxy{
+    public void before(){
+        System.out.println(&quot;b.before&quot;);
+    }
+
+    public void after(){
+        System.out.println(&quot;b.after&quot;);
+    }
+}
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[实现java-mvc-framework.md]]></title>
+        <id>http://zuston.github.io/post/shi-xian-java-mvc-frameworkmd/</id>
+        <link href="http://zuston.github.io/post/shi-xian-java-mvc-frameworkmd/">
+        </link>
+        <updated>2016-12-19T14:20:48.000Z</updated>
+        <summary type="html"><![CDATA[<h4 id="代码地址-httpsgithubcomzustontodosite">代码地址 》》 https://github.com/zuston/todoSite</h4>
+]]></summary>
+        <content type="html"><![CDATA[<h4 id="代码地址-httpsgithubcomzustontodosite">代码地址 》》 https://github.com/zuston/todoSite</h4>
+<!-- more -->
+<p>之前做的都不是 jvm 系列语言的开发，基本都是动态语言，比如 python , php , nodejs 一些。面对之后的工作，决定还是从事 java 语言这一方面的，还是需要学习一下。因为之前也写过 java ，所以上手难度比较低。看了一些书，差不多实现了一个 web framework ,还积累了一些 java 的基础知识需要记录下来，免得遗忘。</p>
+<h3 id="整体架构">整体架构</h3>
+<p>参照之前 php 的框架，如果自己实现 mvc 架构，基本就是根据 url 中传来的 action 参数和 controller 参数来实现动态调用类和方法。 php 直接就能将字符串调用函数和类，从而来实例化。这一点是动态语言的一点优势，不过 Python 并不支持如此调用。因此语言之间的差异还是存在的。对于 java 的话实现的 mvc 整体架构的话，技术上是需要用它的 <code>反射机制</code> 和 <code>类加载器</code> 来实现的，那么路由的实现，是采用 <code>注解</code> 来实现的。<br><br>
+对于实现 <code>AOP</code> 的话，是采用了 java 中的 cglib 来实现的动态代理，这里参照书中，实现了链式代理功能。<br><br>
+对于实现 <code>ORM</code> 功能，在这里的调用时参照 php 里的 yii 框架中的 active record 。具体的实现，是采用建立 bean 类，继承整体自己实现的 baseOrm 来实现整体功能，具体可见代码。</p>
+<h3 id="实现方法">实现方法</h3>
+<p>我们知道，对于 java web 平台的开发，是建立在 java 的 servlet 基础上的，那么不同于 nginx 采用 php-fpm 来调用 php 代码，我们采用 tomcat 来开发的话，其实是 tomcat 实现了一个 web 服务器，对于每一个请求都会分配线程来执行，这边不再赘述。那么对于我们开发一个 web framework 还是实现路由，都是建立在获取请求参数的基础之上，因此我们要做的就是实现一个单 servlet 分发，从来根据请求来动态调用方法，渲染页面。<br></p>
+<h4 id="首先获取所有的-controller-class-和-function-获取并且根据他们的-注解-来一一匹配放入-hashmap-中这样根据请求中所带参数可以调用-方法-可以看一下实现代码">首先获取所有的 controller Class 和 function ,获取并且根据他们的 <code>注解</code> 来一一匹配放入 HashMap 中，这样根据请求中所带参数可以调用 方法 。可以看一下实现代码</h4>
+<pre><code class="language-java">public class coreHelper {
+
+
+    public static HashMap&lt;requestEntity,handlerEntity&gt; coreMap = new HashMap&lt;requestEntity, handlerEntity&gt;();
+
+    static{
+        Set&lt;Class&lt;?&gt;&gt; controllerClass = classHelper.getAllControllerClass();
+        for (Class oneClass:controllerClass){
+            for(Method m:oneClass.getDeclaredMethods()){
+                if(m.isAnnotationPresent(action.class)){
+                    String actionValue = m.getAnnotation(action.class).value();
+                    if(actionValue.split(&quot;:&quot;).length==2){
+                        String requestMethod = actionValue.split(&quot;:&quot;)[0].trim();
+                        String requestUrlPattern = actionValue.split(&quot;:&quot;)[1].trim();
+                        requestEntity request = new requestEntity(requestMethod,requestUrlPattern);
+                        handlerEntity handler = new handlerEntity(oneClass,m);
+                        coreMap.put(request,handler);
+                    }
+                }
+            }
+        }
+    }
+    public static HashMap&lt;requestEntity,handlerEntity&gt; getCoreMap(){
+        return coreMap;
+    }
+
+    public static handlerEntity getHandler(requestEntity request){
+        handlerEntity handler = null;
+        if(coreMap.containsKey(request)){
+            handler = coreMap.get(request);
+        }
+        return handler;
+    }
+}
+</code></pre>
+<h4 id="对于-orm-的实现可以来看一下如下的实例以及调用方式">对于 ORM 的实现，可以来看一下如下的实例，以及调用方式</h4>
+<pre><code class="language-java">public class baseOrm {
+    public static Connection conn = null;
+
+    private void getConn(){
+        conn = new dbUtil().getInstance();
+    }
+    public boolean save() throws IllegalAccessException {
+        if(conn==null){
+            getConn();
+        }
+
+        int paramCount = this.getClass().getDeclaredFields().length;
+        String url = String.format(&quot;insert into %s(%s) values(%s)&quot;,
+                this.getClass().getSimpleName(),
+                this.getClass().getDeclaredFields()[0].getName(),
+                this.getClass().getDeclaredFields()[0].get(this));
+
+        String tableName = this.getClass().getSimpleName();
+        String sqlFormatFront = &quot;insert into &quot;+tableName+&quot;(&quot;;
+        String sqlFormatEnd = &quot;values(&quot;;
+        for(java.lang.reflect.Field field:this.getClass().getDeclaredFields()){
+            String name = field.getName();
+            Object type = field.getType();
+            Object value = field.get(this);
+            sqlFormatFront = sqlFormatFront+name+&quot;,&quot;;
+            if(type.equals(String.class)){
+                sqlFormatEnd = sqlFormatEnd + &quot;'&quot; + (String)value + &quot;',&quot;;
+            }else{
+                sqlFormatEnd = sqlFormatEnd + value + &quot;,&quot;;
+            }
+        }
+        sqlFormatFront = sqlFormatFront.substring(0,sqlFormatFront.length()-1)+&quot;)&quot;;
+        sqlFormatEnd = sqlFormatEnd.substring(0,sqlFormatEnd.length()-1)+&quot;)&quot;;
+        String sql = sqlFormatFront + &quot; &quot; + sqlFormatEnd;
+        System.out.println(sql);
+
+        try {
+            Statement state = conn.createStatement();
+            return state.execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+    public static HashMap&lt;String,Object&gt; sqlCondition = new HashMap&lt;String, Object&gt;();
+
+
+    public baseOrm find(){
+        String tableName = this.getClass().getSimpleName();
+        if (sqlCondition.isEmpty()){
+            sqlCondition.put(&quot;tableName&quot;,tableName);
+            return this;
+        }
+        return this;
+    }
+
+
+
+    public baseOrm findOne(){
+        return this;
+    }
+
+    // TODO: 16/11/30 update实现
+    public baseOrm update(){
+        String url = &quot;update tablename set id = 10 where name=&quot;;
+        if(conn==null){
+            getConn();
+        }
+        String tableName = this.getClass().getSimpleName();
+        for (Field field:this.getClass().getDeclaredFields()){
+
+        }
+        return this;
+    }
+
+    public ResultSet findBySql(String sql) throws SQLException {
+        if(conn==null){
+            getConn();
+        }
+        Statement sts = conn.createStatement();
+        ResultSet res = sts.executeQuery(sql);
+        return res;
+    }
+
+
+
+    public boolean delete(){
+        return false;
+    }
+
+    public boolean deleteAll(){
+        return false;
+    }
+
+    public boolean deleteOne(){
+        return false;
+    }
+
+
+    public baseOrm where(HashMap&lt;String,Object&gt; hs){
+        sqlCondition.put(&quot;condition&quot;,hs);
+        return this;
+    }
+
+    public baseOrm orderby(String tag){
+        sqlCondition.put(&quot;order&quot;,tag);
+        return this;
+    }
+
+    public &lt;T&gt; T one() throws Exception {
+        if(conn==null){
+            getConn();
+        }
+        if(!sqlCondition.containsKey(&quot;tableName&quot;)){
+            throw new Exception(&quot;tableName error&quot;);
+        }
+        String tableName = (String) sqlCondition.get(&quot;tableName&quot;);
+        String baseSql = &quot;select * from &quot;;
+        baseSql += tableName;
+
+        String conditionSql = &quot;&quot;;
+        if(sqlCondition.containsKey(&quot;condition&quot;)){
+            HashMap&lt;String, Object&gt; condition = (HashMap&lt;String,Object&gt;)sqlCondition.get(&quot;condition&quot;);
+            conditionSql = &quot; where &quot;;
+            if(condition!=null){
+                for(Map.Entry&lt;String,Object&gt; mp:condition.entrySet()){
+                    conditionSql += &quot;&quot;+mp.getKey()+&quot;='&quot;+mp.getValue()+&quot;' and &quot;;
+                }
+            }
+        }
+        String orderSql = &quot;&quot;;
+        if(sqlCondition.containsKey(&quot;order&quot;)){
+            String tag = (String) sqlCondition.get(&quot;order&quot;);
+            orderSql += &quot; order by '&quot; + tag +&quot;'&quot;;
+        }
+        String limitSql = &quot; limit 1&quot;;
+        String sql = baseSql;
+        if(!conditionSql.equals(&quot;&quot;)){
+            String csql = conditionSql.substring(0,conditionSql.lastIndexOf(&quot;and&quot;));
+            sql += csql;
+        }
+        if(!orderSql.equals(&quot;&quot;)){
+            sql += orderSql;
+        }
+        sql += limitSql;
+        System.out.println(sql);
+        Statement sts = conn.createStatement();
+        ResultSet res = sts.executeQuery(sql);
+        // TODO: 16/11/28 生成一个对象模型
+        Object model = generateModel(tableName,res);
+        flush();
+        return (T)model;
+    }
+
+    public &lt;T&gt; List&lt;T&gt; all() throws Exception {
+        if(conn==null){
+            getConn();
+        }
+
+        if(!sqlCondition.containsKey(&quot;tableName&quot;)){
+            throw new Exception(&quot;tableName error&quot;);
+        }
+        String tableName = (String) sqlCondition.get(&quot;tableName&quot;);
+        String baseSql = &quot;select * from &quot;;
+        baseSql += tableName;
+
+        String conditionSql = &quot;&quot;;
+        if(sqlCondition.containsKey(&quot;condition&quot;)){
+            HashMap&lt;String, Object&gt; condition = (HashMap&lt;String,Object&gt;)sqlCondition.get(&quot;condition&quot;);
+            conditionSql = &quot; where &quot;;
+            if(condition!=null){
+                for(Map.Entry&lt;String,Object&gt; mp:condition.entrySet()){
+                    conditionSql += &quot;&quot;+mp.getKey()+&quot;='&quot;+mp.getValue()+&quot;' and &quot;;
+                }
+            }
+        }
+        String sql = baseSql;
+        if(!conditionSql.equals(&quot;&quot;)){
+            String csql = conditionSql.substring(0,conditionSql.lastIndexOf(&quot;and&quot;));
+            sql += csql;
+        }
+        System.out.println(sql);
+        Statement sts = conn.createStatement();
+        ResultSet res = sts.executeQuery(sql);
+        // TODO: 16/11/28 生成一个对象模型
+        List&lt;Object&gt; models = generateModels(tableName,res);
+        flush();
+        return (List&lt;T&gt;) models;
+    }
+
+
+    private Object generateModel(String modelName,ResultSet res) throws ClassNotFoundException, IllegalAccessException, InstantiationException, SQLException {
+        while (res.next()){
+            String packageOrm = configHelper.packageOrm();
+
+            ClassLoader cls = Thread.currentThread().getContextClassLoader();
+            Class newModel = cls.loadClass(packageOrm+&quot;.&quot;+modelName);
+            Object instance = newModel.newInstance();
+            for (Field field:this.getClass().getDeclaredFields()){
+                field.setAccessible(true);
+                Object value = null;
+                if (field.getType()==String.class){
+                    value = (String)res.getString(field.getName());
+                }else{
+                    value = (int)res.getInt(field.getName());
+                }
+                field.set(instance,value);
+            }
+            return instance;
+        }
+        return null;
+    }
+
+
+
+    private List&lt;Object&gt; generateModels(String modelName,ResultSet res) throws SQLException, IllegalAccessException, InstantiationException, ClassNotFoundException {
+        List&lt;Object&gt; container = new ArrayList&lt;Object&gt;();
+        String packageOrm = configHelper.packageOrm();
+        ClassLoader cls = Thread.currentThread().getContextClassLoader();
+        Class newModel = cls.loadClass(packageOrm+&quot;.&quot;+modelName);
+        while (res.next()){
+            Object instance = newModel.newInstance();
+            for (Field field:this.getClass().getDeclaredFields()){
+                field.setAccessible(true);
+                Object value = null;
+                if (field.getType()==String.class){
+                    value = (String)res.getString(field.getName());
+                }else{
+                    value = (int)res.getInt(field.getName());
+                }
+                field.set(instance,value);
+            }
+            container.add(instance);
+        }
+        return container;
+    }
+
+    // every action must flush the condition hashmap,avoid influencing the next query action
+    private boolean flush(){
+        sqlCondition = new HashMap&lt;String, Object&gt;();
+        return true;
+    }
+}
+</code></pre>
+<p>具体调用的话是如下：</p>
+<pre><code class="language-java">public class thing extends baseOrm {
+
+    public int userId;
+    public String content;
+
+    public thing(int userId, String content) {
+        this.userId = userId;
+        this.content = content;
+    }
+
+    public thing() {
+    }
+
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public static void main(String[] args) throws Exception {
+        thing tg = new thing();
+        thing res = tg.find().one();
+
+        thing am = new thing();
+        HashMap&lt;String,Object&gt; hs = new HashMap&lt;String, Object&gt;();
+        hs.put(&quot;name&quot;,&quot;shacha&quot;);
+        hs.put(&quot;permission&quot;,&quot;root&quot;);
+        am.find().where(hs).one();
+    }
+}
+</code></pre>
+<h4 id="对于-aop-的实现是采用了动态代理的方式下一篇再详细讲一下">对于 AOP 的实现，是采用了动态代理的方式，下一篇再详细讲一下</h4>
+<h2 id="代码地址-httpsgithubcomzustontodosite-2">代码地址 》》 https://github.com/zuston/todoSite</h2>
+<h2 id="todo">TODO</h2>
+<p>[ ] baseOrm 重构和完善<br>
+[ ] 实现IOC<br>
+[ ] 完成 java web server<br>
+[ ] 关于 Classloader.load() 和 Class.forName() 的区别<br>
+[ ] 动态代理的设计和实现<br>
+[ ] nio io多路复用模型<br>
+[ ] HashMap 的底层实现</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[ThreadLocal浅析]]></title>
+        <id>http://zuston.github.io/post/threadlocal-qian-xi/</id>
+        <link href="http://zuston.github.io/post/threadlocal-qian-xi/">
+        </link>
+        <updated>2016-11-13T06:26:19.000Z</updated>
+        <content type="html"><![CDATA[<h3 id="未用threadlocal出现的问题">未用ThreadLocal出现的问题</h3>
+<pre><code class="language-java">public class zthreadlocal {
+    public static void main(String[] args) {
+        oj o = new oj();
+        Thread t1 = new zthread(o);
+        Thread t2 = new zthread(o);
+        Thread t3 = new zthread(o);
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+}
+class oj{
+    static Integer number = 0;
+    public oj(){
+    }
+
+    public Integer getNumber(){
+        return number++;
+    }
+}
+class zthread extends Thread{
+    private oj o = null;
+    public zthread(oj o){
+        this.o = o;
+    }
+    @Override
+    public void run() {
+        for(int i=0;i&lt;3;i++){
+            System.out.println(Thread.currentThread().getName()+&quot;  &quot;+this.o.getNumber());
+        }
+    }
+}
+
+</code></pre>
+<p>输出为:<br><br>
+Thread-0  0<br><br>
+Thread-0  1<br><br>
+Thread-0  2<br><br>
+Thread-1  3<br><br>
+Thread-1  4<br><br>
+Thread-1  5<br><br>
+Thread-2  6<br><br>
+Thread-2  7<br><br>
+Thread-2  8<br></p>
+<h3 id="threadlocal">ThreadLocal</h3>
+<pre><code class="language-java">public class zthreadlocal {
+    public static void main(String[] args) {
+        oj o = new oj();
+        Thread t1 = new zthread(o);
+        Thread t2 = new zthread(o);
+        Thread t3 = new zthread(o);
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+}
+
+class oj{
+    ThreadLocal&lt;Integer&gt; number = new ThreadLocal&lt;Integer&gt;(){
+        @Override
+        protected Integer initialValue() {
+            return 0;
+        }
+    };
+
+
+    public oj(){
+
+    }
+
+    public Integer getNumber(){
+        Integer res = number.get();
+        number.set(res+1);
+        return res;
+    }
+
+}
+
+
+class zthread extends Thread{
+
+    private oj o = null;
+    public zthread(oj o){
+        this.o = o;
+    }
+
+    @Override
+    public void run() {
+        for(int i=0;i&lt;3;i++){
+            System.out.println(Thread.currentThread().getName()+&quot;  &quot;+this.o.getNumber());
+        }
+    }
+}
+
+</code></pre>
+<p>输出:<br><br>
+Thread-0  0<br><br>
+Thread-0  1<br><br>
+Thread-2  0<br><br>
+Thread-2  1<br><br>
+Thread-1  0<br><br>
+Thread-2  2<br><br>
+Thread-0  2<br><br>
+Thread-1  1<br><br>
+Thread-1  2<br></p>
+<h3 id="如何实现threadlocal">如何实现ThreadLocal</h3>
+<p>实现ThreadLocal很简单，就是判断每个线程的hashCode就可以了，附上代码</p>
+<pre><code class="language-java">public class zthreadlocal {
+    public static void main(String[] args) {
+        oj o = new oj();
+        Thread t1 = new zthread(o);
+        Thread t2 = new zthread(o);
+        Thread t3 = new zthread(o);
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+}
+
+class oj{
+    zt&lt;Integer&gt; number = new zt&lt;Integer&gt;(){
+        @Override
+        protected Integer initialValue() {
+            return 0;
+        }
+    };
+
+
+    public oj(){
+
+    }
+
+    public Integer getNumber(){
+        Integer res = number.get();
+        number.set(res+1);
+        return res;
+    }
+
+}
+
+
+class zthread extends Thread{
+
+    private oj o = null;
+    public zthread(oj o){
+        this.o = o;
+    }
+
+    @Override
+    public void run() {
+        for(int i=0;i&lt;3;i++){
+            System.out.println(Thread.currentThread().getName()+&quot;  &quot;+this.o.getNumber());
+        }
+    }
+}
+class zt&lt;T&gt; {
+    public HashMap&lt;Thread,T&gt; hm = new HashMap&lt;&gt;();
+    private T value = null;
+    public zt(){
+    }
+
+    public  T get(){
+        if(!hm.containsKey(Thread.currentThread())){
+            hm.put(Thread.currentThread(),initialValue());
+        }
+        return hm.get(Thread.currentThread());
+    }
+
+    public void set(T v){
+        hm.put(Thread.currentThread(),v);
+    }
+
+    protected T initialValue(){
+        return null;
+    }
+}
+</code></pre>
+<p>可见思想很重要</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[动态规划]]></title>
+        <id>http://zuston.github.io/post/dong-tai-gui-hua/</id>
+        <link href="http://zuston.github.io/post/dong-tai-gui-hua/">
+        </link>
+        <updated>2016-11-05T17:13:03.000Z</updated>
+        <content type="html"><![CDATA[<p>对于动态规划，最为基础的可能就是<code>0-1背包问题</code>，<code>完全背包</code>等一系列背包问题。回顾一下此类动态规划的解法。</p>
+<h3 id="背包问题">背包问题</h3>
+<h4 id="0-1背包">0-1背包</h4>
+<p>问题：有n个物品，第i个物品价值为vi，重量为wi，其中vi和wi均为非负数，背包的容量为W，W为非负数。现需要考虑如何选择装入背包的物品，使装入背包的物品总价值最大<br></p>
+<p>解法：找到状态转移方程，此处设<code>V{n,weight}=max(V{n-1,weight},V{n-1,w-w[n-1]}+v[n-1])</code>,此处的<code>V{n,weight}</code>就是第n个物品时的最大背包容量weight时候的价值，依次递推式子，由下一项所确定。于是很简单，代码实现就可以了。但注意：此题中<code>V{0,wei}=0 0&lt;=wei&lt;=weight</code>。如果理解深入的话，这里的代码实现的话，是每次都要算出0-weight之间的区间的所有价值的，之所以此，是因为不可知最后一次的weight重量，因此只能默默全部算出来了。<br><br>
+分析：贪心算法与动态规划的算法之间的区别在于，动态规划要实现全局最优的话，因为题目中条件之间有关联关系，因此每次的局部最优并非是全局最优。而贪心算法就是局部最优，而全局最优是由很多局部最优所组成。<br><br>
+递归算法：说到底，所有的动态规划问题都可以用递归算法解决，时间复杂度和栈。背包问题就是放与不放的问题，因此可以用两种状态来迭代，最后的退出条件就是放完了，或者是其他放满了等等。具体问题具体分析了。<br></p>
+<h4 id="完全背包问题">完全背包问题</h4>
+<p>问题：有n个物品，第i个物品价值为vi，重量为wi，其中vi和wi均为非负数，背包的容量为W，W为非负数。现需要考虑如何选择装入背包的物品，使装入背包的物品总价值最大并且装满,是否存在<br><br>
+分析：很简单，在0-1背包的基础上,最后判断价值最大的时候，weight是否为背包容量W<br></p>
+<h4 id="部分背包问题略">部分背包问题（略）</h4>
+<br>
+<h3 id="走路问题">走路问题</h3>
+<p>这个问题很好玩，一开始不会做，理解之后就很简单了。以下从简到难</p>
+<h4 id="爬楼梯问题-leetcode-easy">爬楼梯问题  leetcode [easy]</h4>
+<p>问题：You are climbing a stair case. It takes n steps to reach to the top.Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?<br><br>
+解法：最后一步肯定是由前一步和前两步所决定，所以方程 step[n] = step[n-1]+step[n-2];<br>
+然后再一看，这不是斐波那契数列吗？<br>
+还记得以前斐波那契可以用递归实现吗？<br>
+那么这道题用递归实现是什么意思呢？<br>
+就是第一次走一步还是两步呢，于是就迭代两种方法。</p>
+<p>附上代码：https://github.com/zuston/leetcode/blob/master/ClimbingStairs.java</p>
+<h4 id="最小路径和">最小路径和</h4>
+<p>问题：Given a m*n grid filled with non-negative numbers, find a path from top left to bottom right which minimizes the sum of all numbers along its path.<br><br>
+解法: 最后一条路径求解由两条路径过来，postion转移数组pos[]={ {0,1} , {1,0} },一次算出就可以值的多少，当然取小的一方。注意的是边界情况<br><br>
+附上代码：https://github.com/zuston/leetcode/blob/master/MinimumPathSum.java<br></p>
+<h4 id="unique-paths">Unique Paths</h4>
+<p>问题：A robot is located at the top-left corner of a m x n grid (marked 'Start' in the diagram below).<br>
+The robot can only move either down or right at any point in time. The robot is trying to reach the bottom-right corner of the grid (marked 'Finish' in the diagram below).<br>
+How many possible unique paths are there?<br>
+解法：上一题的翻版，变为有多少条可能路径了。更简单了。<br>
+附上代码：https://github.com/zuston/leetcode/blob/master/UniquePaths.java</p>
+<h4 id="unique-paths-ii">Unique Paths II</h4>
+<p>问题：这一题很有意思<br>
+Follow up for &quot;Unique Paths&quot;:<br>
+Now consider if some obstacles are added to the grids. How many unique paths would there be?<br>
+An obstacle and empty space is marked as 1 and 0 respectively in the grid.<br>
+For example,<br>
+There is one obstacle in the middle of a 3x3 grid as illustrated below.<br>
+[<br>
+[0,0,0],<br>
+[0,1,0],<br>
+[0,0,0]<br>
+]<br>
+The total number of unique paths is 2.<br>
+解析：这一题和上一题的区别在于，此题在路径中设置了路障了，因此从它开始的一些路径无法遍历了。那么就设置从这儿走的路径为1,路障则为0，因为此路不通，注意注意，这一题的边界的问题需要考虑清楚<br>
+代码附上：https://github.com/zuston/leetcode/blob/master/UniquePathsII.java</p>
+<h4 id="还有很多类似的这个走路问题还是很有趣的-还有代价值最小的三角形也是一样的思路此处不表快做烂了">还有很多类似的，这个走路问题还是很有趣的。还有代价值最小的三角形，也是一样的思路，此处不表，快做烂了。</h4>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[k-means和knn]]></title>
+        <id>http://zuston.github.io/post/k-means-he-knn/</id>
+        <link href="http://zuston.github.io/post/k-means-he-knn/">
+        </link>
+        <updated>2016-10-20T13:50:23.000Z</updated>
+        <summary type="html"><![CDATA[<p>🏆</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>🏆</p>
+<!-- more -->
+<h2 id="knn">knn</h2>
+<p>knn是数据分析的中很简单的一种分类算法，对于一组具有n个特征元素的数据集，在线性可分的情况下，运用knn来进行分类。其实现实情况下，采用的不是很多，比如验证码识别采用knn就识别率很低。并不是优化问题，而是算法本身的局限性。<br><br>
+knn算法是说对于一系列已经打好标签的点，对于下一个要预测的点，则用这个点与所有已有label的点来进行距离（distance）比较，将distance最小的k个点取出来，查看他们的label的种类最多的那个，就是预测的结果<br></p>
+<pre><code class="language-python">#coding:utf-8
+import numpy as np
+import matplotlib.pyplot as plt
+
+def knn(exmpleSet,dataset,labelset,k):
+        if len(dataset)!=len(labelset):
+            print '检查参数，标记数和数据集不对等'
+            return
+
+        dset = np.array(dataset)
+        # 一维数组
+        eset = np.array(exmpleSet)
+
+        res = (((dset-eset)**2).sum(axis=1))**0.5
+        index = np.argsort(res)
+        resCount = {0:0,1:0}
+        for c in range(k):
+            labelFlag = labelset[index[c]]
+            resCount[labelFlag] += 1
+
+        # print resCount
+        return 0 if resCount[0]&gt;resCount[1] else 1
+
+def show(exmpleSet,data,labelset,predictLabel):
+    mark = ['or', 'ob', 'og', 'ok', '^r', '+r', 'sr', 'dr', '&lt;r', 'pr']
+    index=0
+    for td in data:
+        plt.plot(float(td[0])/10,float(td[1])/10,mark[labelset[index]],markersize=10)
+        index += 1
+    plt.plot(float(exmpleSet[0])/10,float(exmpleSet[1])/10,'pr',markersize=15)
+    plt.show()
+
+if __name__ == '__main__':
+    '''
+    电影场景的判断：x参数为打斗出现场景次数
+                 y参数为吻戏出现场景次数
+                 labelset 标记为0为打斗戏，1为爱情戏
+                 来自《machine learning in action》
+    '''
+    exmpleSet = [3,2]
+    dataset = [[8,3],[10,1],[45,32],[78,34],[9,18],[23,45],[34,45],[12,19]]
+    labelset = [0,0,0,0,1,1,1,1]
+    predictLable =  knn(exmpleSet,dataset,labelset,5)
+    show(exmpleSet,dataset,labelset,predictLable)
+    print predictLable
+</code></pre>
+<h4 id="附上简单实现">附上简单实现</h4>
+<p>https://github.com/zuston/code-library/blob/master/ml-basic-algorithm/KNN.py</p>
+<h2 id="k-means">k-means</h2>
+<p>k-means是数据分析的聚类算法，相对于分类算法，聚类算法算是无监督学习的一种入门算法。简单一提，无监督学习就是对于一些未处理的数据通过算法干打标签的活，再针对这个进行学习预测下面的点。监督学习的话，就是以上所述的分类算法了，已经打好标签了。<br><br>
+懒得叙述了，第一次新鲜ppt和代码献上。代码可出图，前提先安装matplotlib.<br></p>
+<h4 id="附上地址">附上地址</h4>
+<p>https://github.com/zuston/code-library/tree/master/ml-basic-algorithm/k-means</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[SVM算法]]></title>
+        <id>http://zuston.github.io/post/svm-suan-fa/</id>
+        <link href="http://zuston.github.io/post/svm-suan-fa/">
+        </link>
+        <updated>2016-10-13T06:34:28.000Z</updated>
+        <summary type="html"><![CDATA[<p>🏃</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>🏃</p>
+<!-- more -->
+<p>这一周刚好想要学习下机器学习以及数据分析这一块，正好下周需要讲一下算法，就想采用svm算法来讲一下。看的还是比较浅显的，先记下来备忘</p>
+<h3 id="算法简述">算法简述</h3>
+<p>svm算法算是监督学习，在机器学习里面是一个分类器。<br><br>
+举个栗子，还是沿用《机器学习实战》这本书里面的讲的knn算法的那个栗子。就是对于一部电影是武打片还是爱情片的判定。在这里，我们用出现武打的场景和出现吻戏以及床戏的场景数来进行作为分类的依据，那么对于每部电影都会有这么两个特征值。对于他们到底是武打片还是爱情片的类别呢，我们用一个label向量来一一对应表示他们的类别。比如[1,0,1,1],这里用1来表示武打，用0来表示爱情片。</p>
+<pre><code class="language-python">import numpy as np
+# 这里的label就是对于每一部电影的标识，训练集的话需要数据有标识，来达到分类的目标
+label = np.array([[1,0,1,1]])
+dataset = [[23,45],[35,23],[45,56],[45,23]]
+training_set = np.array(dataset)
+</code></pre>
+<p>那么对于trainning_set这个数据集的话是能够在二维的平面上进行表示的，这里熟悉的话可以用matplotlib来进行展示观察。此处我们就用二维来进行描述，对于这些点分好类的点，我们能够用一条线来进行区分他们，从而能够预测接下来的测试集，并给他们打上是武打片还是爱情片的论断。<br><br>
+svm算法就是能够在给线性可分的数据或者是线性不可分的数据进行分类，至于拟合的函数接下来说。还是阐述下二维的拟合线性的函数的思路。对于一组在二维平面上线性可分的数据来说，我们要找到这两组数据的明确分割点，从而找到他们的支持向量，从而在最大化两组支持向量间的距离，这样的话，对于超平面的位置基本就确定了。只要在两组最大化的支持向量中间就是超平面的位置。(眼见着要睡觉了，还是记下些自己懂的吧)<br><br>
+<img src="http://zuston.github.io/post-images/1555295360272.jpg" alt="支持向量和超平面位置" loading="lazy"><br>
+那么对于线性不可分的数据集，其实我们可以映射到高维来看。（举个例子，在二维下，我们的线性分割是线。在三维下，我们的超平面是个面，那么依此可推，在n维下，超平面是和n-1维的东西，这里先打个预防针，知晓下）。低维度的线性不可分，其实在高维看来只是压缩重叠了一个坐标轴而已，因为依照核函数，其实可以拉伸一维，从而在这一维度存在超平面。所以任意的数据集都是线性可分的，只要找到合适的超平面。<br><br>
+<img src="http://zuston.github.io/post-images/1555295378040.png" alt="二维下的线性不可分图像" loading="lazy"><br>
+<img src="http://zuston.github.io/post-images/1555295389325.gif" alt="" loading="lazy"><br>
+在回到二维的环境下，假设数据是线性可分的，我们拟合的函数那么对于label是如何判定的呢，误差大不大呢？这里就是一个线性回归的问题，对于回归函数我们一般采用一个两个无穷最后趋近于两个值的函数，来做sig函数。意思就是说，只要远离那个分界点（0.5），就能够最大程度预测，误差减小。<br>
+<img src="http://zuston.github.io/post-images/1555295399625.png" alt="" loading="lazy"><br>
+<img src="http://zuston.github.io/post-images/1555295437476.png" alt="" loading="lazy"></p>
+<h3 id="附上svm算法实例和训练集和测试集">附上svm算法实例和训练集和测试集</h3>
+<p>https://github.com/zuston/code-library/blob/master/ml-basic-algorithm/svm/sklean-svm.py</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[redis 基本命令]]></title>
+        <id>http://zuston.github.io/post/redis-ji-ben-ming-ling/</id>
+        <link href="http://zuston.github.io/post/redis-ji-ben-ming-ling/">
+        </link>
+        <updated>2016-10-09T12:00:15.000Z</updated>
+        <summary type="html"><![CDATA[<p>🏆</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>🏆</p>
+<!-- more -->
+<h2 id="基本数据结构">基本数据结构</h2>
+<h3 id="字符串-strings">字符串 strings</h3>
+<pre><code class="language-c">set online:count 100
+get online:count
+incr count
+incrby count 4
+</code></pre>
+<h3 id="集合-set">集合 set</h3>
+<p>主要用于好友关系操作，交集并集都为o(1)</p>
+<pre><code class="language-c">sadd friends:zuston wei qiu yin chao
+sadd friends:wei qiu yin ruiding
+// 求交集
+sinter friends:zuston friends:wei 
+// 求差集
+sdiff friends:zuston friends:wei
+// 求并集
+sunion friends:zuston friends:wei
+// 获取成员数
+scard friends:zuston
+// 获取所有成员
+smembers friends:zuston
+//抛出一个成员，抛出就删除
+spop friends:zuston
+</code></pre>
+<h3 id="散列-hash">散列 hash</h3>
+<pre><code class="language-c">// 储存一个登录名,即一对多的关系
+hset user:loginName zuston jinxi32@163.com shacha
+hgetall user:loginName
+
+&lt;!-- 存储对象 --&gt;
+hmset user:zuston name &quot;zjf&quot; age 20 sex '男'
+hgetall user:zuston 
+hmget user:zuston name
+&lt;!-- 获取key的所有字段 --&gt;
+hkeys user:zuston
+&lt;!-- 获取key的所有字段的值 --&gt;
+hvals user:zuston
+</code></pre>
+<h3 id="有序集合-sorted-set">有序集合 sorted set</h3>
+<p>这个数据结构主要为ranking,实现排行榜,人员为唯一的，分数可以重复</p>
+<pre><code class="language-c">&lt;!-- 和集合一样，唯一区别的是给每一个加权重 --&gt;
+zadd name 1 zuston
+zadd name 2 wei
+zadd name 1 yin
+zrange name 0 10 
+&lt;!-- 获取全部val值 --&gt;
+zrange name 0 -1 withscores
+&lt;!--  --&gt;
+</code></pre>
+<h3 id="列表-list">列表 list</h3>
+<p>用于维持一个稳定的最新成员，比如最为亲近的10个成员</p>
+<pre><code class="language-c">lpush latest:friends:zuston wei yin qiu cheng shacha
+lpop latest:friends:zuston
+&lt;!-- 维持一个最新的10个成员 --&gt;
+ltrim latest:friends:zuston 0 10
+
+&lt;!-- 操作会被阻塞，如果指定的列表 key list1 存在数据则会返回第一个元素，否则在等待100秒后会返回 nil 。 --&gt;
+blpop list1 100
+&lt;!-- 堵塞返回最后一个成员,即为队列,timeout没有，则堵塞 --&gt;
+brpop list1 timeout 
+</code></pre>
+<h2 id="组合操作">组合操作</h2>
+<h3 id="事务-transaction">事务 transaction</h3>
+<p>用于维持一个稳定的最新成员，比如最为亲近的10个成员</p>
+<pre><code class="language-c">multi
+set key value
+exec
+</code></pre>
+<pre><code class="language-ruby">redis.multi()
+current = redis.get('powerlevel')
+redis.set('powerlevel', current + 1)
+redis.exec()
+</code></pre>
+<h3 id="使用期限-expiration">使用期限 expiration</h3>
+<p>redis可以标记一个关键字的过期时间，到期自动删除</p>
+<pre><code class="language-c">&lt;!-- 十秒后删除 --&gt;
+expire online:count 10
+&lt;!-- 查看key的存活时间 --&gt;
+ttl online:count
+</code></pre>
+<h3 id="发布和订阅-publication-and-subscription">发布和订阅 publication and subscription</h3>
+<pre><code class="language-c">subscribe news 
+&lt;!-- 另一客户端执行 --&gt;
+public news 'earthquake in beijing'
+</code></pre>
+]]></content>
+    </entry>
+</feed>

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1580197906693">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1584175573760">
 <link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
 
 
@@ -29,7 +29,7 @@
   <div class="site-header">
     <div class="left">
       <a href="http://zuston.github.io">
-        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1580197906693" alt="" width="32px" height="32px">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1584175573760" alt="" width="32px" height="32px">
       </a>
       <a href="http://zuston.github.io">
         <h1 class="site-title">沙茶</h1>
@@ -86,7 +86,7 @@
               <span>
                 <i class="icon-pricetags-outline"></i>
                 
-                  <a href="http://zuston.github.io/tag/7d94xRJjI">
+                  <a href="http://zuston.github.io/tag/7d94xRJjI/">
                     算法
                     
                   </a>
@@ -100,21 +100,21 @@
 <!-- more -->
 <h2 id="1longest-substring-without-repeating-characters">1：Longest Substring Without Repeating Characters</h2>
 <h4 id="given-a-string-find-the-length-of-the-longest-substring-without-repeating-characters">Given a string, find the length of the longest substring without repeating characters.</h4>
-<p><strong>example</strong>:
-Given &quot;abcabcbb&quot;, the answer is &quot;abc&quot;, which the length is 3.
-Given &quot;bbbbb&quot;, the answer is &quot;b&quot;, with the length of 1.
+<p><strong>example</strong>:<br>
+Given &quot;abcabcbb&quot;, the answer is &quot;abc&quot;, which the length is 3.<br>
+Given &quot;bbbbb&quot;, the answer is &quot;b&quot;, with the length of 1.<br>
 Given &quot;pwwkew&quot;, the answer is &quot;wke&quot;, with the length of 3. Note that the answer must be a substring, &quot;pwke&quot; is a subsequence and not a substring.</p>
-<p>题目：就是寻找最长不重复字串
-解析：其实最方便最暴力的解法就是将每一个字符与后面的字符进行比较，然后发现与现有的字串重复的则重新开始下一轮循环比较。那么这个算法时间复杂度是比较高的，应该是o(n^2),改进的算法就是在比较这一轮上下功夫，用一个很巧妙的方法进行比较。
-换种看字符是否存在过的思路:则是将出现过的字符以字符名为key，当前位置值i为value组成数组，如果发现有重复，则记录当前字符名下的数组的value值，从而可以计算出当前的不重复字串的长度。
-在这个过程中，我们要明确一点就是对于一个重复字符的字串，那么下一个开始查找子串的初始位置，必然在其重复字串出现的第一个的下一位。
-<strong>example</strong>：
-数组为:  int array[100];
-index:  0--------1--------2-----------3--------4-----------5------------6
+<p>题目：就是寻找最长不重复字串<br>
+解析：其实最方便最暴力的解法就是将每一个字符与后面的字符进行比较，然后发现与现有的字串重复的则重新开始下一轮循环比较。那么这个算法时间复杂度是比较高的，应该是o(n^2),改进的算法就是在比较这一轮上下功夫，用一个很巧妙的方法进行比较。<br>
+换种看字符是否存在过的思路:则是将出现过的字符以字符名为key，当前位置值i为value组成数组，如果发现有重复，则记录当前字符名下的数组的value值，从而可以计算出当前的不重复字串的长度。<br>
+在这个过程中，我们要明确一点就是对于一个重复字符的字串，那么下一个开始查找子串的初始位置，必然在其重复字串出现的第一个的下一位。<br>
+<strong>example</strong>：<br>
+数组为:  int array[100];<br>
+index:  0--------1--------2-----------3--------4-----------5------------6<br>
 value:  a--------b--------c-----------a--------c-----------g------------h</p>
-<p><strong>first loop</strong>:     从array[0]到array[3]中，发现index=0和index=3重复
-<strong>second loop</strong>:    从array[1]开始到array[4],发现index=2和index=4重复
-<strong>third loop</strong>:     从array[3]开始，到最后都没有重复字符
+<p><strong>first loop</strong>:     从array[0]到array[3]中，发现index=0和index=3重复<br>
+<strong>second loop</strong>:    从array[1]开始到array[4],发现index=2和index=4重复<br>
+<strong>third loop</strong>:     从array[3]开始，到最后都没有重复字符<br>
 就是这么一个比较的过程</p>
 <p>代码如下：</p>
 <pre><code class="language-c">int lengthOfLongestSubstring(char* s){
