@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://zuston.github.io</id>
     <title>沙茶</title>
-    <updated>2020-03-14T12:56:19.485Z</updated>
+    <updated>2020-03-14T13:12:45.661Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://zuston.github.io"/>
     <link rel="self" href="http://zuston.github.io/atom.xml"/>
@@ -53,13 +53,13 @@
 <li>后台线程会周期性或触发式的合并与压缩段文件，来节约空间和减少检索时间</li>
 <li>为了避免内存表因为机器的崩溃或意外丢失，完全可以维护一个内存表日志，每个写入 append 到日志中。且这个文件的生命周期同内存表</li>
 </ol>
-<p>插图</p>
+<figure data-type="image" tabindex="1"><img src="http://zuston.github.io/post-images/1584191301760.png" alt="" loading="lazy"></figure>
 <h4 id="那么什么是-lsm-tree">那么什么是 LSM-Tree</h4>
 <p>SSTable 和 内存表共同构成了 LOG-Structured Merge Tree.</p>
 <h4 id="性能优化">性能优化</h4>
 <p>当一个键不存在时，需要从内存表 -&gt; n 个段文件中进行查找，耗时良久</p>
 <p>解决方案：<strong>布隆过滤器</strong>， 将所有的值都经过 k 次 hash function 后填充到相应的 bit array 中，虽然存在一定程度的误判。造成不存在的 key，可能误判为存在，不过问题不大，大不了多几次IO</p>
-<figure data-type="image" tabindex="1"><img src="http://zuston.github.io/post-images/1584188622686.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="2"><img src="http://zuston.github.io/post-images/1584188622686.png" alt="" loading="lazy"></figure>
 <h2 id="b-trees">B-Trees</h2>
 <p>B树作为一种广泛使用的关系型数据库引擎的数据结构，非常流行<br>
 和 LSM-Tree 一样，B-Tree 同样保留排序的 KV 键值对，从而实现高效的查找和区间查询。但设计理念完全不同于 LSM-Tree。日志结构索引将数据库分解为可变大小且排序的段文件，相比之下，B-Tree 将数据库分解为固定大小的页，所以B-Tree 的每一层都是一页，相对于磁盘的固定大小的块。<br>
@@ -73,7 +73,7 @@
 <li>为什么不是哈希索引，因为hash无法达到范围查询的要求。</li>
 <li>为什么不是B树呢？同样是范围查询的问题。B 树与 B+ 树的最大区别就是，B 树可以在非叶结点中存储数据，但是 B+ 树的所有数据其实都存储在叶子节点中，当一个表底层的数据结构是 B 树时，如果是范围查询，则需要多次随机 I/O。而对于B+树时，就直接扫描到叶子节点，直接顺序扫描即可~</li>
 </ol>
-<figure data-type="image" tabindex="2"><img src="http://zuston.github.io/post-images/1584189261275.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="3"><img src="http://zuston.github.io/post-images/1584189261275.png" alt="" loading="lazy"></figure>
 <h4 id="为什么-mongodb-使用-b-树">为什么 MongoDb 使用 B 树</h4>
 <p>很简单，MongoDB 的设置里面对于范围查询不鼓励，且推荐的JSON设计结构就是不太需要范围查询的，就选择 B 树来降低单独主键查询的命中率，可能省去了n次IO。因为不需要到叶子节点才能获取数据~</p>
 <h2 id="对比-b-trees-和-lsm-tree">对比 B-Trees 和 LSM-Tree</h2>
@@ -91,7 +91,7 @@
 <h1 id="列式存储-lsm-tree-应用">列式存储 （LSM-Tree 应用）</h1>
 <p>列存储的方案很简单，通常的行存储是一行的数据都放置在一起，所有的数据库优化都是面向行数据的。但是在 OLAP 场景下，有些事实表的列非常的多，但是每次查询只需要几十个列，如果按照行来存储的话，就造成了内存 oom 和效率的低下。因此，需要改进存储结构，将其变成列式存储。</p>
 <p>不要将一行中的所有值存储在一起，而是将每一列的值存储在一起。如果每个列的值存储于一个单独的文件中，查询的时候只需要读取每个文件中的特定的行数列，将它们组装在一起即可。</p>
-<figure data-type="image" tabindex="3"><img src="http://zuston.github.io/post-images/1584189317174.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="4"><img src="http://zuston.github.io/post-images/1584189317174.png" alt="" loading="lazy"></figure>
 <h4 id="列压缩">列压缩</h4>
 <p>使用 <strong>位图索引</strong></p>
 <h4 id="列压缩-2">列压缩</h4>
