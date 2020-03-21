@@ -2,13 +2,100 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://zuston.github.io</id>
     <title>沙茶</title>
-    <updated>2020-03-18T15:07:54.089Z</updated>
+    <updated>2020-03-21T15:01:23.477Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://zuston.github.io"/>
     <link rel="self" href="http://zuston.github.io/atom.xml"/>
     <logo>http://zuston.github.io/images/avatar.png</logo>
     <icon>http://zuston.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, 沙茶</rights>
+    <entry>
+        <title type="html"><![CDATA[DDIA-Chapter7 事务]]></title>
+        <id>http://zuston.github.io/post/ddia-chapter7-shi-wu/</id>
+        <link href="http://zuston.github.io/post/ddia-chapter7-shi-wu/">
+        </link>
+        <updated>2020-03-18T15:09:40.000Z</updated>
+        <summary type="html"><![CDATA[<p>事务的产生与单机或者分布式无关，纯粹是逻辑上的线程、行为并行导致的一些意外情况，通过__事务__来解决数据的一致性、隔离性、原子性和持久性。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>事务的产生与单机或者分布式无关，纯粹是逻辑上的线程、行为并行导致的一些意外情况，通过__事务__来解决数据的一致性、隔离性、原子性和持久性。</p>
+<!-- more -->
+<p>首先定义一下__事务__, 是将应用程序的多个读写操作捆绑在一起，成为一个逻辑的操作单元。因此一个事务要么成功（提交）、要么失败（中止或者回滚）。应当是没有一个中间状态的。</p>
+<p>所以事务有四个特性，ACID 分别是 Atomicity, Consistency, Isolation, Durability.</p>
+<p>但是一直与关系型数据库相比较的NoSql , 一般被叫做以 Base 结尾的名称，基本遵从了 Basically Available, Soft state, Eventual consistency. （这一段是作者的嘲讽，忍住不笑）</p>
+<p>原子性、持久性与一致性基本没有什么问题，因为没有这些基础，事务无从谈起。需要着重叙述的是隔离性，另外插句嘴，我们以下讨论的是多对象（此处多对象为多个操作捆绑在一起的概念）事务，当然也是有单对象事务。</p>
+<h2 id="隔离级别">隔离级别</h2>
+<p><strong>弱隔离级别</strong></p>
+<ol>
+<li>读已经提交的</li>
+<li>在一个事务期间，可重复读取</li>
+</ol>
+<p><strong>强隔离级别</strong></p>
+<ol>
+<li>事务串行化执行</li>
+</ol>
+<p>当前讨论范围我们先限制在两个事务同时执行，且一个为读事务A，一个为写事务B</p>
+<h2 id="读已经提交的">读已经提交的</h2>
+<p>这意味着可以防止脏读和脏写。<br>
+脏读的意思是：当 B 执行写操作且还没执行完的时候，A已经读到了B写的数据变化，此时读到的数据即为脏读<br>
+脏写的意思是：B 写的数据为一个尚未提交的事务的一部分，则会互相覆盖，这就造成了脏写。</p>
+<p><strong>如何实现读已提交的呢?</strong></p>
+<ol>
+<li>对于写的操作，实现一个行级别锁。类似于 for update 这样的锁。从而当有两个事务中均有写请求时候，能够延迟一个写请求到一个事务结束后才开始执行。</li>
+<li>对于读操作来说，每个事务只维护一个被变动数据的新值和旧值，相较于 mvcc(multi version concurrency control) 来说，就是只设置了两个版本，新值与旧值</li>
+</ol>
+<h2 id="可重复读">可重复读</h2>
+<p>书中没有强调的一点是：其实是在一个事务期间，一份数据是可以重复读的。否则可能会对理解偏差。<br>
+首先我们需要举个例子来说明上面的读已经提交没有解决可重复读的问题。就会造成两个读取在同一个事务中读取到的值是不一致的。<br>
+<img src="http://zuston.github.io/post-images/1584802640830.png" alt="" loading="lazy"></p>
+<p><strong>实现快照级别的隔离来解决不可重复读的问题</strong><br>
+快照级别隔离其实就是 mvcc, 多版本并发控制。在读提交的级别下，为每个不同的查询单独创建一个快照，就是为每个事务设置一个唯一的 ID， 其中操作的数据即是在设置ID那一刻的数据，所有的数据都会被设置一个版本号，操作数据时，需要 版本号 &lt;  事务ID。</p>
+<p>但是这个策略是只对只读的事务是有效的。</p>
+<p><strong>总结一下</strong><br>
+上述的两个隔离级别其实都是在解决只读事务在遇到并发写的时候可以看到什么的问题，当然其中中间也设计到脏写的问题。<br>
+但是接下来我们要主要讨论的是两个事务并发写的问题。而脏写也只是并发写的其中一个特例</p>
+<h2 id="串行化">串行化</h2>
+<p>串行化是解决幻读和写倾斜的问题<br>
+举个例子：<br>
+两个医生需要确定今晚谁值班，医院规定必须要有一个人值班。因此两个人分别在系统上进行操作，事务流程为先 select 当前在岗医生，发现2&gt;1, 满足条件，就继续设置自己 offline。最后发现两个医生都成功了。可就造成了幻读情况和写倾斜</p>
+<p>写倾斜的产生的一般模式：</p>
+<ol>
+<li>首先有一些匹配条件，即采用 select 提交查询所有满足条件的行</li>
+<li>根据查询结果，来做一些操作</li>
+<li>如果决定继续执行，则会 update/delete 等</li>
+</ol>
+<p>当有并发事务时，会去同时获取步骤1 的条件，也同时满足，则会共同执行以下步骤，这时候已经是不满足前置条件。出现了问题。<br>
+当然我们也可以采用 for update 的方式，但是这只是特殊情况下的一种方式，可能我们都无法加锁呢？</p>
+<p>所以我们需要串行化的执行，将多线程并发改为单线程单独做。但实际上可串行化也并没有全部改为完全并行化，一般分为如下的三种实现方式：</p>
+<ol>
+<li>真正的串行执行，这个效率低下，就不讨论了</li>
+<li>两阶段锁定</li>
+<li>乐观并发控制技术</li>
+</ol>
+<h4 id="两阶段锁定2pl">两阶段锁定，2PL</h4>
+<p>其实就是两个事务在遇到需要读写互斥的情况时，增加共享锁和互斥锁。</p>
+<ol>
+<li>当事务A读取对象时，需要先获取到共享锁，如果要修改对象，则需要升级获取互斥锁</li>
+<li>获得锁之后，需要持有锁到事务结束。第一阶段获得锁，第二阶段释放锁</li>
+</ol>
+<p><strong>问题来了，这个锁是怎么实现的呢？</strong></p>
+<ol>
+<li>谓词锁。对比如 select * from tb where id=20 and name=&quot;hello&quot; 的 SQL 采用谓词锁，就是对 id=20 和 name=&quot;hello&quot; 两个搜索条件加上锁的记录。杀伤力巨大，因为任何涉及到满足这两个搜索条件的对象，都会命中。</li>
+<li>索引区间锁。也很简单，就是对 select * from tb where id=20 and name=&quot;hello&quot; 这个 SQL 的条件设置索引的锁，就是将锁加到搜索条件的索引到。因此只要有互斥的数据的变更，肯定会更新索引，也就能检测到冲突。但是当搜索条件未命中索引时，则退化为全表加共享锁，性能差</li>
+</ol>
+<h4 id="基于-mvvc-的乐观并发控制的可串行化快照隔离">基于 MVVC 的乐观并发控制的可串行化快照隔离</h4>
+<p>上述的 2PL 其实是悲观锁，认为只要两个事务有双读操作，就有可能产生冲突，因此就会从刚开始就会获锁，且要么直接放弃事务，要么就是一方等待。<br>
+但可串行化的快照隔离则是一种乐观锁，就是如果可能潜在会发生冲突，则会继续进行下去，直到事务提交前，才会检查是否确实发生了冲突</p>
+<p>前面叙述的写倾斜和幻读的情况，其实是一种事务执行期间，<strong>基于过期的条件</strong> 做决定的问题。换句话说，事务是基于某些前提条件进行判断采取行动，在事务开始时候条件成立，例如目前有两名医生进行值班，但是当事务提交时，条件已经不成立。<br>
+但是如何知道条件发生了改变呢？</p>
+<ol>
+<li>是否读取了一个即将过期的 mvvc 对象，在读取之前已经有其他事务写入了这个值，但是未提交的情况（这意味着，这个前提条件已经有可能不复存在了）</li>
+<li>检查写入是否即将影响即将完成的读取事务，（这意味着读取之后，又有其他事务进行写入）</li>
+</ol>
+<p>从设计层面上来看，这个设计对于一些读多的事务，显然性能效率会高很多。</p>
+<hr>
+<p>MySQL InnoDB 是如何实现这些事务级别的呢？它的锁有分为哪些呢？悲观锁、乐观锁又是如何做的呢？</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[DDIA-Chapter3 数据存储与检索]]></title>
         <id>http://zuston.github.io/post/ddia-chapter3/</id>
@@ -1283,39 +1370,6 @@ if __name__ == '__main__':
 懒得叙述了，第一次新鲜ppt和代码献上。代码可出图，前提先安装matplotlib.<br></p>
 <h4 id="附上地址">附上地址</h4>
 <p>https://github.com/zuston/code-library/tree/master/ml-basic-algorithm/k-means</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[SVM 算法]]></title>
-        <id>http://zuston.github.io/post/svm-suan-fa/</id>
-        <link href="http://zuston.github.io/post/svm-suan-fa/">
-        </link>
-        <updated>2016-10-13T06:34:28.000Z</updated>
-        <summary type="html"><![CDATA[<p>🏃</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>🏃</p>
-<!-- more -->
-<p>这一周刚好想要学习下机器学习以及数据分析这一块，正好下周需要讲一下算法，就想采用svm算法来讲一下。看的还是比较浅显的，先记下来备忘</p>
-<h3 id="算法简述">算法简述</h3>
-<p>svm算法算是监督学习，在机器学习里面是一个分类器。<br><br>
-举个栗子，还是沿用《机器学习实战》这本书里面的讲的knn算法的那个栗子。就是对于一部电影是武打片还是爱情片的判定。在这里，我们用出现武打的场景和出现吻戏以及床戏的场景数来进行作为分类的依据，那么对于每部电影都会有这么两个特征值。对于他们到底是武打片还是爱情片的类别呢，我们用一个label向量来一一对应表示他们的类别。比如[1,0,1,1],这里用1来表示武打，用0来表示爱情片。</p>
-<pre><code class="language-python">import numpy as np
-# 这里的label就是对于每一部电影的标识，训练集的话需要数据有标识，来达到分类的目标
-label = np.array([[1,0,1,1]])
-dataset = [[23,45],[35,23],[45,56],[45,23]]
-training_set = np.array(dataset)
-</code></pre>
-<p>那么对于trainning_set这个数据集的话是能够在二维的平面上进行表示的，这里熟悉的话可以用matplotlib来进行展示观察。此处我们就用二维来进行描述，对于这些点分好类的点，我们能够用一条线来进行区分他们，从而能够预测接下来的测试集，并给他们打上是武打片还是爱情片的论断。<br><br>
-svm算法就是能够在给线性可分的数据或者是线性不可分的数据进行分类，至于拟合的函数接下来说。还是阐述下二维的拟合线性的函数的思路。对于一组在二维平面上线性可分的数据来说，我们要找到这两组数据的明确分割点，从而找到他们的支持向量，从而在最大化两组支持向量间的距离，这样的话，对于超平面的位置基本就确定了。只要在两组最大化的支持向量中间就是超平面的位置。(眼见着要睡觉了，还是记下些自己懂的吧)<br><br>
-<img src="http://zuston.github.io/post-images/1555295360272.jpg" alt="支持向量和超平面位置" loading="lazy"><br>
-那么对于线性不可分的数据集，其实我们可以映射到高维来看。（举个例子，在二维下，我们的线性分割是线。在三维下，我们的超平面是个面，那么依此可推，在n维下，超平面是和n-1维的东西，这里先打个预防针，知晓下）。低维度的线性不可分，其实在高维看来只是压缩重叠了一个坐标轴而已，因为依照核函数，其实可以拉伸一维，从而在这一维度存在超平面。所以任意的数据集都是线性可分的，只要找到合适的超平面。<br><br>
-<img src="http://zuston.github.io/post-images/1555295378040.png" alt="二维下的线性不可分图像" loading="lazy"><br>
-<img src="http://zuston.github.io/post-images/1555295389325.gif" alt="" loading="lazy"><br>
-在回到二维的环境下，假设数据是线性可分的，我们拟合的函数那么对于label是如何判定的呢，误差大不大呢？这里就是一个线性回归的问题，对于回归函数我们一般采用一个两个无穷最后趋近于两个值的函数，来做sig函数。意思就是说，只要远离那个分界点（0.5），就能够最大程度预测，误差减小。<br>
-<img src="http://zuston.github.io/post-images/1555295399625.png" alt="" loading="lazy"><br>
-<img src="http://zuston.github.io/post-images/1555295437476.png" alt="" loading="lazy"></p>
-<h3 id="附上svm算法实例和训练集和测试集">附上svm算法实例和训练集和测试集</h3>
-<p>https://github.com/zuston/code-library/blob/master/ml-basic-algorithm/svm/sklean-svm.py</p>
 ]]></content>
     </entry>
 </feed>

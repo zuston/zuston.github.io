@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>DDIA-Chapter7 事务 | 沙茶</title>
+<meta name="description" content="">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1584802823556">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1584802823556" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">沙茶</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">DDIA-Chapter7 事务</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-03-18</span>
+            
+          </div>
+          <div class="post-content">
+            <p>事务的产生与单机或者分布式无关，纯粹是逻辑上的线程、行为并行导致的一些意外情况，通过__事务__来解决数据的一致性、隔离性、原子性和持久性。</p>
+<!-- more -->
+<p>首先定义一下__事务__, 是将应用程序的多个读写操作捆绑在一起，成为一个逻辑的操作单元。因此一个事务要么成功（提交）、要么失败（中止或者回滚）。应当是没有一个中间状态的。</p>
+<p>所以事务有四个特性，ACID 分别是 Atomicity, Consistency, Isolation, Durability.</p>
+<p>但是一直与关系型数据库相比较的NoSql , 一般被叫做以 Base 结尾的名称，基本遵从了 Basically Available, Soft state, Eventual consistency. （这一段是作者的嘲讽，忍住不笑）</p>
+<p>原子性、持久性与一致性基本没有什么问题，因为没有这些基础，事务无从谈起。需要着重叙述的是隔离性，另外插句嘴，我们以下讨论的是多对象（此处多对象为多个操作捆绑在一起的概念）事务，当然也是有单对象事务。</p>
+<h2 id="隔离级别">隔离级别</h2>
+<p><strong>弱隔离级别</strong></p>
+<ol>
+<li>读已经提交的</li>
+<li>在一个事务期间，可重复读取</li>
+</ol>
+<p><strong>强隔离级别</strong></p>
+<ol>
+<li>事务串行化执行</li>
+</ol>
+<p>当前讨论范围我们先限制在两个事务同时执行，且一个为读事务A，一个为写事务B</p>
+<h2 id="读已经提交的">读已经提交的</h2>
+<p>这意味着可以防止脏读和脏写。<br>
+脏读的意思是：当 B 执行写操作且还没执行完的时候，A已经读到了B写的数据变化，此时读到的数据即为脏读<br>
+脏写的意思是：B 写的数据为一个尚未提交的事务的一部分，则会互相覆盖，这就造成了脏写。</p>
+<p><strong>如何实现读已提交的呢?</strong></p>
+<ol>
+<li>对于写的操作，实现一个行级别锁。类似于 for update 这样的锁。从而当有两个事务中均有写请求时候，能够延迟一个写请求到一个事务结束后才开始执行。</li>
+<li>对于读操作来说，每个事务只维护一个被变动数据的新值和旧值，相较于 mvcc(multi version concurrency control) 来说，就是只设置了两个版本，新值与旧值</li>
+</ol>
+<h2 id="可重复读">可重复读</h2>
+<p>书中没有强调的一点是：其实是在一个事务期间，一份数据是可以重复读的。否则可能会对理解偏差。<br>
+首先我们需要举个例子来说明上面的读已经提交没有解决可重复读的问题。就会造成两个读取在同一个事务中读取到的值是不一致的。<br>
+<img src="http://zuston.github.io/post-images/1584802640830.png" alt="" loading="lazy"></p>
+<p><strong>实现快照级别的隔离来解决不可重复读的问题</strong><br>
+快照级别隔离其实就是 mvcc, 多版本并发控制。在读提交的级别下，为每个不同的查询单独创建一个快照，就是为每个事务设置一个唯一的 ID， 其中操作的数据即是在设置ID那一刻的数据，所有的数据都会被设置一个版本号，操作数据时，需要 版本号 &lt;  事务ID。</p>
+<p>但是这个策略是只对只读的事务是有效的。</p>
+<p><strong>总结一下</strong><br>
+上述的两个隔离级别其实都是在解决只读事务在遇到并发写的时候可以看到什么的问题，当然其中中间也设计到脏写的问题。<br>
+但是接下来我们要主要讨论的是两个事务并发写的问题。而脏写也只是并发写的其中一个特例</p>
+<h2 id="串行化">串行化</h2>
+<p>串行化是解决幻读和写倾斜的问题<br>
+举个例子：<br>
+两个医生需要确定今晚谁值班，医院规定必须要有一个人值班。因此两个人分别在系统上进行操作，事务流程为先 select 当前在岗医生，发现2&gt;1, 满足条件，就继续设置自己 offline。最后发现两个医生都成功了。可就造成了幻读情况和写倾斜</p>
+<p>写倾斜的产生的一般模式：</p>
+<ol>
+<li>首先有一些匹配条件，即采用 select 提交查询所有满足条件的行</li>
+<li>根据查询结果，来做一些操作</li>
+<li>如果决定继续执行，则会 update/delete 等</li>
+</ol>
+<p>当有并发事务时，会去同时获取步骤1 的条件，也同时满足，则会共同执行以下步骤，这时候已经是不满足前置条件。出现了问题。<br>
+当然我们也可以采用 for update 的方式，但是这只是特殊情况下的一种方式，可能我们都无法加锁呢？</p>
+<p>所以我们需要串行化的执行，将多线程并发改为单线程单独做。但实际上可串行化也并没有全部改为完全并行化，一般分为如下的三种实现方式：</p>
+<ol>
+<li>真正的串行执行，这个效率低下，就不讨论了</li>
+<li>两阶段锁定</li>
+<li>乐观并发控制技术</li>
+</ol>
+<h4 id="两阶段锁定2pl">两阶段锁定，2PL</h4>
+<p>其实就是两个事务在遇到需要读写互斥的情况时，增加共享锁和互斥锁。</p>
+<ol>
+<li>当事务A读取对象时，需要先获取到共享锁，如果要修改对象，则需要升级获取互斥锁</li>
+<li>获得锁之后，需要持有锁到事务结束。第一阶段获得锁，第二阶段释放锁</li>
+</ol>
+<p><strong>问题来了，这个锁是怎么实现的呢？</strong></p>
+<ol>
+<li>谓词锁。对比如 select * from tb where id=20 and name=&quot;hello&quot; 的 SQL 采用谓词锁，就是对 id=20 和 name=&quot;hello&quot; 两个搜索条件加上锁的记录。杀伤力巨大，因为任何涉及到满足这两个搜索条件的对象，都会命中。</li>
+<li>索引区间锁。也很简单，就是对 select * from tb where id=20 and name=&quot;hello&quot; 这个 SQL 的条件设置索引的锁，就是将锁加到搜索条件的索引到。因此只要有互斥的数据的变更，肯定会更新索引，也就能检测到冲突。但是当搜索条件未命中索引时，则退化为全表加共享锁，性能差</li>
+</ol>
+<h4 id="基于-mvvc-的乐观并发控制的可串行化快照隔离">基于 MVVC 的乐观并发控制的可串行化快照隔离</h4>
+<p>上述的 2PL 其实是悲观锁，认为只要两个事务有双读操作，就有可能产生冲突，因此就会从刚开始就会获锁，且要么直接放弃事务，要么就是一方等待。<br>
+但可串行化的快照隔离则是一种乐观锁，就是如果可能潜在会发生冲突，则会继续进行下去，直到事务提交前，才会检查是否确实发生了冲突</p>
+<p>前面叙述的写倾斜和幻读的情况，其实是一种事务执行期间，<strong>基于过期的条件</strong> 做决定的问题。换句话说，事务是基于某些前提条件进行判断采取行动，在事务开始时候条件成立，例如目前有两名医生进行值班，但是当事务提交时，条件已经不成立。<br>
+但是如何知道条件发生了改变呢？</p>
+<ol>
+<li>是否读取了一个即将过期的 mvvc 对象，在读取之前已经有其他事务写入了这个值，但是未提交的情况（这意味着，这个前提条件已经有可能不复存在了）</li>
+<li>检查写入是否即将影响即将完成的读取事务，（这意味着读取之后，又有其他事务进行写入）</li>
+</ol>
+<p>从设计层面上来看，这个设计对于一些读多的事务，显然性能效率会高很多。</p>
+<hr>
+<p>MySQL InnoDB 是如何实现这些事务级别的呢？它的锁有分为哪些呢？悲观锁、乐观锁又是如何做的呢？</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/ddia-chapter3/">
+              <h3 class="post-title">
+                下一篇：DDIA-Chapter3 数据存储与检索
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan"></div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  github.com/zuston
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
