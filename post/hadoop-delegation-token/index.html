@@ -5,7 +5,7 @@
     
 <meta charset="utf-8" >
 
-<title>一次排查 Delegation token bug 的过程 | 沙茶</title>
+<title>Hadoop Delegation Token | 沙茶</title>
 <meta name="description" content="">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -79,13 +79,21 @@
       <div class="content-container">
         <div class="post-detail">
           
-          <h2 class="post-title">一次排查 Delegation token bug 的过程</h2>
+          <h2 class="post-title">Hadoop Delegation Token</h2>
           <div class="post-info post-detail-info">
-            <span><i class="icon-calendar-outline"></i> 2019-06-11</span>
+            <span><i class="icon-calendar-outline"></i> 2020-03-21</span>
             
           </div>
           <div class="post-content">
-            <p>填坑。。。。</p>
+            <p>Hadoop Delegation Token 在 Spark/Flink on Yarn 和 Oozie 中广泛使用，本文探讨下 DT 的设计交互流程和各框架的使用情况</p>
+<!-- more -->
+<p>参考资料：<br>
+https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YarnApplicationSecurity.html<br>
+https://www.jianshu.com/p/617fa722e057<br>
+https://www.jianshu.com/p/2904334ae404<br>
+https://issues.apache.org/jira/browse/SPARK-5342</p>
+<p>https://github.com/cloudera/hadoop-common/blob/cdh5-2.6.0_5.13.0/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-resourcemanager/src/main/java/org/apache/hadoop/yarn/server/resourcemanager/security/DelegationTokenRenewer.java#L564</p>
+<p>https://github.com/cloudera/spark/blob/cdh5-1.6.0_5.13.0/yarn/src/main/scala/org/apache/spark/deploy/yarn/AMDelegationTokenRenewer.scala</p>
 
           </div>
         </div>

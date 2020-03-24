@@ -2,13 +2,56 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://zuston.github.io</id>
     <title>沙茶</title>
-    <updated>2020-03-21T15:01:23.477Z</updated>
+    <updated>2020-03-24T15:13:40.016Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://zuston.github.io"/>
     <link rel="self" href="http://zuston.github.io/atom.xml"/>
     <logo>http://zuston.github.io/images/avatar.png</logo>
     <icon>http://zuston.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, 沙茶</rights>
+    <entry>
+        <title type="html"><![CDATA[DDIA-Chapter6 数据分区]]></title>
+        <id>http://zuston.github.io/post/ddia-chapter6-shu-ju-fen-qu/</id>
+        <link href="http://zuston.github.io/post/ddia-chapter6-shu-ju-fen-qu/">
+        </link>
+        <updated>2020-03-24T14:45:00.000Z</updated>
+        <summary type="html"><![CDATA[<p>当数据量过大的情况下，将数据复制到一些机器上，不仅能够容错且也能降低查询负载。但这还不够，数据量太大超过单机的存储和处理，就会产生瓶颈。因此需要引入数据分区，通过将数据较为均匀的分散在多台机器上来降低查询负载，避免出现热点。同时要选择合适的分区策略，和节点上下线时候的动态分区平衡策略</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>当数据量过大的情况下，将数据复制到一些机器上，不仅能够容错且也能降低查询负载。但这还不够，数据量太大超过单机的存储和处理，就会产生瓶颈。因此需要引入数据分区，通过将数据较为均匀的分散在多台机器上来降低查询负载，避免出现热点。同时要选择合适的分区策略，和节点上下线时候的动态分区平衡策略</p>
+<!-- more -->
+<h2 id="主要分区方法">主要分区方法</h2>
+<h4 id="指定关键字的区间分区">指定关键字的区间分区</h4>
+<p>每个机器上的各个分区都会指定一段关键字的区间范围，各自匹配到不同的关键字上。这个方法的优点很明显，进行区间查询是很方便的，因为同一分区的数据是按照字典序来存储的。<br>
+但是缺点是：对于同一关键字的访问，将会出现热点问题。</p>
+<p><strong>如何进行分区平衡操作呢?</strong></p>
+<ol>
+<li>一般分区太大时，就会将分区分裂成两个小分区，关键字的范围再分配</li>
+<li>分区太小，则可以进行合并</li>
+</ol>
+<p>####一致性哈希分区<br>
+对关键字进行哈希取值，而每个分区都会分配一段取值的范围空间，匹配到不同的哈希取值的空间中。<br>
+因为这种方法打破了原有数据的顺序关系，区间查询效率将比较低。<br>
+优点是可以一定程序的避免热点问题。但是对于唯一的一个关键字的查询，还是会引发热点。</p>
+<p><strong>如何进行分区平衡操作呢?</strong></p>
+<ol>
+<li>一般事先是预分配了大量的分区，每个节点都会承担多个分区。</li>
+<li>添加和删除节点时候，则直接迁移分区到节点即可。</li>
+</ol>
+<p><strong>问题</strong>： 为什么不直接取模操作呢？</p>
+<ol>
+<li>如果是取模操作，当前集群内有6个分区，则 x%6, 每个数据的分区都是绑定在一起的。当有一个分区下线时，则数据都得重新计算，得不偿失</li>
+</ol>
+<h2 id="二级索引">二级索引</h2>
+<ol>
+<li>本地索引，基于文档来进行索引。索引存储在与关键字相同的分区中，这就是写入的时候，只需要写相同分区，但是查询的时候就会造成读放大</li>
+<li>全局索引，基于词条来分区。基于索引值再分区，写入时会可能会写不同的分区，但是读是直接能从单个分区中读取数据</li>
+</ol>
+<h2 id="请求路由">请求路由</h2>
+<p>一般数据的分区与节点信息是存储于 zk 中的，当然有一些设计是数据库自带一个存储，不依赖外部服务<br>
+比如 HBase 的索引情况，如下所示</p>
+<figure data-type="image" tabindex="1"><img src="http://zuston.github.io/post-images/1585062714740.png" alt="" loading="lazy"></figure>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[DDIA-Chapter7 事务]]></title>
         <id>http://zuston.github.io/post/ddia-chapter7-shi-wu/</id>
@@ -1302,74 +1345,6 @@ The total number of unique paths is 2.<br>
 解析：这一题和上一题的区别在于，此题在路径中设置了路障了，因此从它开始的一些路径无法遍历了。那么就设置从这儿走的路径为1,路障则为0，因为此路不通，注意注意，这一题的边界的问题需要考虑清楚<br>
 代码附上：https://github.com/zuston/leetcode/blob/master/UniquePathsII.java</p>
 <h4 id="还有很多类似的这个走路问题还是很有趣的-还有代价值最小的三角形也是一样的思路此处不表快做烂了">还有很多类似的，这个走路问题还是很有趣的。还有代价值最小的三角形，也是一样的思路，此处不表，快做烂了。</h4>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[k-means 和 knn]]></title>
-        <id>http://zuston.github.io/post/k-means-he-knn/</id>
-        <link href="http://zuston.github.io/post/k-means-he-knn/">
-        </link>
-        <updated>2016-10-20T13:50:23.000Z</updated>
-        <summary type="html"><![CDATA[<p>🏆</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>🏆</p>
-<!-- more -->
-<h2 id="knn">knn</h2>
-<p>knn是数据分析的中很简单的一种分类算法，对于一组具有n个特征元素的数据集，在线性可分的情况下，运用knn来进行分类。其实现实情况下，采用的不是很多，比如验证码识别采用knn就识别率很低。并不是优化问题，而是算法本身的局限性。<br><br>
-knn算法是说对于一系列已经打好标签的点，对于下一个要预测的点，则用这个点与所有已有label的点来进行距离（distance）比较，将distance最小的k个点取出来，查看他们的label的种类最多的那个，就是预测的结果<br></p>
-<pre><code class="language-python">#coding:utf-8
-import numpy as np
-import matplotlib.pyplot as plt
-
-def knn(exmpleSet,dataset,labelset,k):
-        if len(dataset)!=len(labelset):
-            print '检查参数，标记数和数据集不对等'
-            return
-
-        dset = np.array(dataset)
-        # 一维数组
-        eset = np.array(exmpleSet)
-
-        res = (((dset-eset)**2).sum(axis=1))**0.5
-        index = np.argsort(res)
-        resCount = {0:0,1:0}
-        for c in range(k):
-            labelFlag = labelset[index[c]]
-            resCount[labelFlag] += 1
-
-        # print resCount
-        return 0 if resCount[0]&gt;resCount[1] else 1
-
-def show(exmpleSet,data,labelset,predictLabel):
-    mark = ['or', 'ob', 'og', 'ok', '^r', '+r', 'sr', 'dr', '&lt;r', 'pr']
-    index=0
-    for td in data:
-        plt.plot(float(td[0])/10,float(td[1])/10,mark[labelset[index]],markersize=10)
-        index += 1
-    plt.plot(float(exmpleSet[0])/10,float(exmpleSet[1])/10,'pr',markersize=15)
-    plt.show()
-
-if __name__ == '__main__':
-    '''
-    电影场景的判断：x参数为打斗出现场景次数
-                 y参数为吻戏出现场景次数
-                 labelset 标记为0为打斗戏，1为爱情戏
-                 来自《machine learning in action》
-    '''
-    exmpleSet = [3,2]
-    dataset = [[8,3],[10,1],[45,32],[78,34],[9,18],[23,45],[34,45],[12,19]]
-    labelset = [0,0,0,0,1,1,1,1]
-    predictLable =  knn(exmpleSet,dataset,labelset,5)
-    show(exmpleSet,dataset,labelset,predictLable)
-    print predictLable
-</code></pre>
-<h4 id="附上简单实现">附上简单实现</h4>
-<p>https://github.com/zuston/code-library/blob/master/ml-basic-algorithm/KNN.py</p>
-<h2 id="k-means">k-means</h2>
-<p>k-means是数据分析的聚类算法，相对于分类算法，聚类算法算是无监督学习的一种入门算法。简单一提，无监督学习就是对于一些未处理的数据通过算法干打标签的活，再针对这个进行学习预测下面的点。监督学习的话，就是以上所述的分类算法了，已经打好标签了。<br><br>
-懒得叙述了，第一次新鲜ppt和代码献上。代码可出图，前提先安装matplotlib.<br></p>
-<h4 id="附上地址">附上地址</h4>
-<p>https://github.com/zuston/code-library/tree/master/ml-basic-algorithm/k-means</p>
 ]]></content>
     </entry>
 </feed>

@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>DDIA-Chapter6 数据分区 | 沙茶</title>
+<meta name="description" content="">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="http://zuston.github.io/favicon.ico?v=1585062809650">
+<link rel="stylesheet" href="http://zuston.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="http://zuston.github.io">
+        <img class="avatar" src="http://zuston.github.io/images/avatar.png?v=1585062809650" alt="" width="32px" height="32px">
+      </a>
+      <a href="http://zuston.github.io">
+        <h1 class="site-title">沙茶</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">DDIA-Chapter6 数据分区</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-03-24</span>
+            
+          </div>
+          <div class="post-content">
+            <p>当数据量过大的情况下，将数据复制到一些机器上，不仅能够容错且也能降低查询负载。但这还不够，数据量太大超过单机的存储和处理，就会产生瓶颈。因此需要引入数据分区，通过将数据较为均匀的分散在多台机器上来降低查询负载，避免出现热点。同时要选择合适的分区策略，和节点上下线时候的动态分区平衡策略</p>
+<!-- more -->
+<h2 id="主要分区方法">主要分区方法</h2>
+<h4 id="指定关键字的区间分区">指定关键字的区间分区</h4>
+<p>每个机器上的各个分区都会指定一段关键字的区间范围，各自匹配到不同的关键字上。这个方法的优点很明显，进行区间查询是很方便的，因为同一分区的数据是按照字典序来存储的。<br>
+但是缺点是：对于同一关键字的访问，将会出现热点问题。</p>
+<p><strong>如何进行分区平衡操作呢?</strong></p>
+<ol>
+<li>一般分区太大时，就会将分区分裂成两个小分区，关键字的范围再分配</li>
+<li>分区太小，则可以进行合并</li>
+</ol>
+<p>####一致性哈希分区<br>
+对关键字进行哈希取值，而每个分区都会分配一段取值的范围空间，匹配到不同的哈希取值的空间中。<br>
+因为这种方法打破了原有数据的顺序关系，区间查询效率将比较低。<br>
+优点是可以一定程序的避免热点问题。但是对于唯一的一个关键字的查询，还是会引发热点。</p>
+<p><strong>如何进行分区平衡操作呢?</strong></p>
+<ol>
+<li>一般事先是预分配了大量的分区，每个节点都会承担多个分区。</li>
+<li>添加和删除节点时候，则直接迁移分区到节点即可。</li>
+</ol>
+<p><strong>问题</strong>： 为什么不直接取模操作呢？</p>
+<ol>
+<li>如果是取模操作，当前集群内有6个分区，则 x%6, 每个数据的分区都是绑定在一起的。当有一个分区下线时，则数据都得重新计算，得不偿失</li>
+</ol>
+<h2 id="二级索引">二级索引</h2>
+<ol>
+<li>本地索引，基于文档来进行索引。索引存储在与关键字相同的分区中，这就是写入的时候，只需要写相同分区，但是查询的时候就会造成读放大</li>
+<li>全局索引，基于词条来分区。基于索引值再分区，写入时会可能会写不同的分区，但是读是直接能从单个分区中读取数据</li>
+</ol>
+<h2 id="请求路由">请求路由</h2>
+<p>一般数据的分区与节点信息是存储于 zk 中的，当然有一些设计是数据库自带一个存储，不依赖外部服务<br>
+比如 HBase 的索引情况，如下所示</p>
+<figure data-type="image" tabindex="1"><img src="http://zuston.github.io/post-images/1585062714740.png" alt="" loading="lazy"></figure>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="http://zuston.github.io/post/ddia-chapter7-shi-wu/">
+              <h3 class="post-title">
+                下一篇：DDIA-Chapter7 事务
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan"></div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  github.com/zuston
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
