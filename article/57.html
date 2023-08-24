@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html class="h-full antialiased" lang="en">
+
+<head>
+    <meta charSet="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Hadoop unified virtual filesystem</title>
+    <meta name="description" content="Motivation
+Goals
+How to design
+Result" />
+    <script src="/js/tailwindcss.js"></script>
+</head>
+
+<body class="flex h-full flex-col bg-zinc-50 dark:bg-black">
+    <div id="__next">
+        <div class="fixed inset-0 flex justify-center sm:px-8">
+            <div class="flex w-full max-w-7xl lg:px-8">
+                <div class="w-full bg-white ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-300/20"></div>
+            </div>
+        </div>
+        <div>
+            <nav id="header">
+    <div class="bg-gray-100">
+        <header class="sticky top-0 z-30 w-full px-2 py-4 bg-white sm:px-4 shadow  dark:bg-slate-800">
+            <div class="flex items-center justify-between mx-auto max-w-5xl">
+                <a href="/">
+                    <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-200">show notes</span>
+                </a>
+                <div class="flex items-center space-x-1">
+                    <ul class="hidden space-x-2 md:inline-flex">
+                        <li><a href="/" class="px-4 py-2 font-semibold text-gray-600 rounded dark:text-white">Home</a></li>
+                    </ul>
+                    <div class="inline-flex md:hidden">
+                        <button class="flex-none px-2 ">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                            </svg>
+                            <span class="sr-only">Open Menu</span>
+                        </button>
+                        <!-- put list item -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+<!--    <div class="w-full flex items-center justify-between mt-0 px-6 py-2">-->
+<!--       <div class="md:flex md:items-center md:w-auto w-full order-3 md:order-1" id="menu">-->
+<!--          <nav >-->
+<!--             <ul class="flex rounded-full bg-white/90 px-3 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur dark:bg-zinc-800/90 dark:text-zinc-200 dark:ring-white/10">-->
+<!--                <li><a class="relative block px-3 py-2 transition hover:text-teal-500 dark:hover:text-teal-400 item-menu" href="/">Home</a></li>-->
+<!--             </ul>-->
+<!--          </nav>-->
+<!--       </div>-->
+<!--       -->
+<!--    </div>-->
+ </nav>
+        </div>
+        <div class="relative">
+            <main>
+                <div class="sm:px-8 mt-6 lg:mt-6">
+                    <div class="mx-auto max-w-6xl lg:px-8">
+                        <div class="relative px-4 sm:px-8 lg:px-12">
+                            <div class="mx-auto max-w-6xl lg:max-w-4xl">
+                                <div class="xl:relative">
+                                    <div class="mx-auto max-w-6xl">
+                                        <article class="dark:text-white">
+                                            <header class="flex flex-col">
+                                                <h1
+                                                    class="mt-6 text-4xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100 sm:text-5xl">
+                                                    Hadoop unified virtual filesystem</h1>
+                                                <div class="flex w-full items-center justify-between pb-3 mt-6">
+                                                    <div class="flex items-center space-x-3">
+                                                        <div class="text-xs text-neutral-500">
+                                                            2023-05-01</div>
+                                                    </div>
+                                                    <div class="flex items-center space-x-8">
+                                                        
+                                                    </div>
+                                                </div>
+                                            </header>
+                                            <div class="mt-8">
+                                                <div
+                                                    class="d-block color-fg-default comment-body markdown-body js-comment-body">
+                                                    <h1 dir="auto">Motivation</h1>
+<h1 dir="auto">Goals</h1>
+<h1 dir="auto">How to design</h1>
+<h1 dir="auto">Result</h1>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <div class="pt-10 pb-16">
+                <script src="https://utteranc.es/client.js"
+                        repo="zuston/zuston.github.io"
+                        issue-term="pathname"
+                        theme="github-light"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            </div>
+            <footer>
+    <div class="sm:px-8">
+        <div class="mx-auto max-w-7xl lg:px-8">
+            <div class="border-t border-zinc-100 pt-10 pb-16 dark:border-zinc-700/40">
+                <div class="relative px-4 sm:px-8 lg:px-12">
+                    <div class="mx-auto max-w-2xl lg:max-w-5xl">
+                        <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                            <div class="flex gap-6 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                                <a class="transition hover:text-teal-500 dark:hover:text-teal-400" href="/">Home</a>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">©
+                                    <!-- -->2023
+                                    <!-- --> zuston. All rights reserved.
+                                </p>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">
+                                    Powered by <a href="https://github.com/zuston/lizi" class="text-gray-800 dark:text-white">lizi</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</footer>
+        </div>
+    </div>
+    <link rel="stylesheet" href="/css/color-modes.css">
+    <link rel="stylesheet" href="/css/post.css">
+    <link rel="stylesheet" href="/css/markdown.css">
+    <link rel="stylesheet" href="/css/base.css">
+</body>
+
+</html>

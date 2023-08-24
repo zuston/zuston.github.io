@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html class="h-full antialiased" lang="en">
+
+<head>
+    <meta charSet="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Apache Uniffle(incubating) 0.7 版本 AQE 优化</title>
+    <meta name="description" content="引言
+在应用 uniffle 到我们内部集群时，使用的还是 0.5 版本(此时 uniffle 还未加入 Apache 基金会， 原名 Tencent/Firestorm)。Uniffle 是在我们内部 Spark3.x 上应用，但是腾讯内部仍是大量 Spark2.x 的任�" />
+    <script src="/js/tailwindcss.js"></script>
+</head>
+
+<body class="flex h-full flex-col bg-zinc-50 dark:bg-black">
+    <div id="__next">
+        <div class="fixed inset-0 flex justify-center sm:px-8">
+            <div class="flex w-full max-w-7xl lg:px-8">
+                <div class="w-full bg-white ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-300/20"></div>
+            </div>
+        </div>
+        <div>
+            <nav id="header">
+    <div class="bg-gray-100">
+        <header class="sticky top-0 z-30 w-full px-2 py-4 bg-white sm:px-4 shadow  dark:bg-slate-800">
+            <div class="flex items-center justify-between mx-auto max-w-5xl">
+                <a href="/">
+                    <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-200">show notes</span>
+                </a>
+                <div class="flex items-center space-x-1">
+                    <ul class="hidden space-x-2 md:inline-flex">
+                        <li><a href="/" class="px-4 py-2 font-semibold text-gray-600 rounded dark:text-white">Home</a></li>
+                    </ul>
+                    <div class="inline-flex md:hidden">
+                        <button class="flex-none px-2 ">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                            </svg>
+                            <span class="sr-only">Open Menu</span>
+                        </button>
+                        <!-- put list item -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+<!--    <div class="w-full flex items-center justify-between mt-0 px-6 py-2">-->
+<!--       <div class="md:flex md:items-center md:w-auto w-full order-3 md:order-1" id="menu">-->
+<!--          <nav >-->
+<!--             <ul class="flex rounded-full bg-white/90 px-3 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur dark:bg-zinc-800/90 dark:text-zinc-200 dark:ring-white/10">-->
+<!--                <li><a class="relative block px-3 py-2 transition hover:text-teal-500 dark:hover:text-teal-400 item-menu" href="/">Home</a></li>-->
+<!--             </ul>-->
+<!--          </nav>-->
+<!--       </div>-->
+<!--       -->
+<!--    </div>-->
+ </nav>
+        </div>
+        <div class="relative">
+            <main>
+                <div class="sm:px-8 mt-6 lg:mt-6">
+                    <div class="mx-auto max-w-6xl lg:px-8">
+                        <div class="relative px-4 sm:px-8 lg:px-12">
+                            <div class="mx-auto max-w-6xl lg:max-w-4xl">
+                                <div class="xl:relative">
+                                    <div class="mx-auto max-w-6xl">
+                                        <article class="dark:text-white">
+                                            <header class="flex flex-col">
+                                                <h1
+                                                    class="mt-6 text-4xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100 sm:text-5xl">
+                                                    Apache Uniffle(incubating) 0.7 版本 AQE 优化</h1>
+                                                <div class="flex w-full items-center justify-between pb-3 mt-6">
+                                                    <div class="flex items-center space-x-3">
+                                                        <div class="text-xs text-neutral-500">
+                                                            2022-12-14</div>
+                                                    </div>
+                                                    <div class="flex items-center space-x-8">
+                                                        
+                                                    </div>
+                                                </div>
+                                            </header>
+                                            <div class="mt-8">
+                                                <div
+                                                    class="d-block color-fg-default comment-body markdown-body js-comment-body">
+                                                    <h2 dir="auto">引言</h2>
+<p dir="auto">在应用 uniffle 到我们内部集群时，使用的还是 0.5 版本(此时 uniffle 还未加入 Apache 基金会， 原名 Tencent/Firestorm)。Uniffle 是在我们内部 Spark3.x 上应用，但是腾讯内部仍是大量 Spark2.x 的任务，因为未对 Spark3.x 做优化。在此过程中，我们作为吃螃蟹的人，踩了很多坑，也做了一些针对性的优化。本文讲述的主要优化均已在 uniffle 0.7 版本发布，详见：<a href="https://uniffle.apache.org/download/release-notes-0.7.0" rel="nofollow">https://uniffle.apache.org/download/release-notes-0.7.0</a></p>
+<h2 dir="auto">AQE</h2>
+<p dir="auto">Spark 中的 shuffle 一直是重点的性能优化点，又因为 join 的具体实现与 shuffle 机制密切相关，因此如果要详细优化 uniffle 的 shuffle, 必须对 join 有一定的了解。</p>
+<p dir="auto">那么我们先从 spark 的 sort merge join 聊起，再引申到 RSS 如何更好匹配 Spark 的shuffle 提升性能</p>
+<h3 dir="auto">Join 与 Shuffle</h3>
+<p dir="auto">大数据的快建立在能对数据进行分区，且并行计算的基础上。但是 join 却因为需要聚合数据，因此有 join 的任务一般都具有 shuffle 的阶段，同时也是任务的最大耗时点。</p>
+<p dir="auto">Spark 默认使用的就是 SortMergeJoin, 详见于早期版本的 hashJoin, 不仅提升了 executor 的稳定性，还适用于大规模的数据量。因此沿用了很多年。但是在面对各种各样的业务场景，单一的 join 机制已经是不能满足用户需求。因此也会有 boardcastJoin 之类的其他 join 策略。</p>
+<p dir="auto">同时对于 join 策略的自动调整，以及在 reducer 侧对倾斜数据量的优化，也都涵盖在了 Spark 3.x 的 AQE 机制中了。</p>
+<h3 dir="auto">SortMergeJoin</h3>
+<p dir="auto">先给出 sortMergeJoin 的原理图，如下：<br>
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/221556248-3b094ec3-e7eb-4c13-a05a-5be94a9a7f4a.png"><img src="https://user-images.githubusercontent.com/8609142/221556248-3b094ec3-e7eb-4c13-a05a-5be94a9a7f4a.png" alt="image" style="max-width: 100%;"></a></p>
+<p dir="auto">因此在 executor 侧进行局部的 sort 之后，在 reducer 需要读取某个 partition 的时候，就需要去连接上游所有的 mapper 输出的数据（partition 与 mapper 对应的元数据存储在 mapOutputTracker 中），此时就会产生一次 shuffle reader，同时也会带来一些随机 IO</p>
+<h3 dir="auto">SortMergeJoin -&gt; Broadcast Join</h3>
+<p dir="auto">但是当我们两张表 join 其中一张表较小时，可以通过 AQE(此过程发生在 shuffle write 完成时，因为 driver 会拥有所有的分区数据) 将其从 <code class="notranslate">SortMergeJoin</code> 优化为 <code class="notranslate">Broadcast join</code>. 也就是说，对于上面的模式，省去了一部分 shuffle 的网络开销，但是需要把小表 boardcast 到所有的 reducer task(也可以是 executor) 中。如下所示</p>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/207542815-2443c4c9-2272-4af0-8763-1bd8a366b770.png"><img src="https://user-images.githubusercontent.com/8609142/207542815-2443c4c9-2272-4af0-8763-1bd8a366b770.png" alt="image" style="max-width: 100%;"></a></p>
+<p dir="auto">-- 如果单纯非 AQE 下且手动指定了 Broadcast join, 则此过程无 shuffle.</p>
+<h4 dir="auto">Local shuffle read</h4>
+<p dir="auto">但是这足够么？对于经过上述优化过后的读取， 如下所示，仍然存在一张大表数据的 shuffle read，也就是下图的中的右下部分的图片，其中的一个 reducer 中读取的数据都是同一个 partition 的（常规 shuffle 做法）</p>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/207543109-222ac2c9-1774-4c19-bae8-51596fd83911.png"><img src="https://user-images.githubusercontent.com/8609142/207543109-222ac2c9-1774-4c19-bae8-51596fd83911.png" alt="image" style="max-width: 100%;"></a></p>
+<p dir="auto">但是我们没有必要在 reducer 中将一张大表的 partition 都聚会于同一个 reducer 中，join 的关键是将两张表的 partition 汇聚到一个 reducer 中。现在小表的数据 broadcast 出来了，因此没必要做 partition get 操作了。因此完全可以将 reader 取消跨网络的 shuffle, 直接将 reader 调度到 mapper 侧的 executor 上(此时的 reader 读取的数据指定为全部为此 executor map 上产出的所有数据)，实现 local shuffle read. 也就是如上图的右上侧的展示。理论上来说，配合调度，此过程无任何 remote shuffle 产生。</p>
+<p dir="auto">通过上述的优化，理论上就不会存在 shuffle 的开销了。此时的 reducer partition 的描述如下</p>
+<div class="highlight highlight-source-scala notranslate position-relative overflow-auto" dir="auto" data-snippet-clipboard-copy-content="  case PartialMapperPartitionSpec(mapIndex, startReducerIndex, endReducerIndex) =&gt;
+        SparkEnv.get.shuffleManager.getReaderForRange(
+          dependency.shuffleHandle,
+          mapIndex,
+          mapIndex + 1,
+          startReducerIndex,
+          endReducerIndex,
+          context,
+          sqlMetricsReporter)"><pre class="notranslate">  <span class="pl-k">case</span> <span class="pl-en">PartialMapperPartitionSpec</span>(mapIndex, startReducerIndex, endReducerIndex) <span class="pl-k">=&gt;</span>
+        <span class="pl-en">SparkEnv</span>.get.shuffleManager.getReaderForRange(
+          dependency.shuffleHandle,
+          mapIndex,
+          mapIndex <span class="pl-k">+</span> <span class="pl-c1">1</span>,
+          startReducerIndex,
+          endReducerIndex,
+          context,
+          sqlMetricsReporter)</pre></div>
+<p dir="auto">假设 <code class="notranslate">mapIndex = 101, startReducerIndex = 0, endReducerIndex = 1000</code><br>
+也就是说 reducer 会从上游 mapIndex = 101 的 executor 上读取 partition 从 (0, 1000) 的数据。此时如果 spark 调度器将此 reducer 调度到 mapIndex=101 的 executor 上，则 shuffle 数据直接从本地的 blockManager 中读取，完全没有网络传输的开销。</p>
+<h4 dir="auto">RemoteShuffleService 与 localShuffleRead 的矛盾</h4>
+<p dir="auto">依照上述的 <code class="notranslate">PartialMapperPartitionSpec</code> 设定，对于如果使用了 Uniffle 来讲，每一个 partition 均被分发到了具体的 shuffle server 上。那么如果从 mapIndex 的角度来去获取数据，则不仅会带来大量的随机 IO，而且会带来 <code class="notranslate">reducer number * shuffle-server number</code> 的网络连接，性能将下降十分明显。如下所示</p>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/207548259-3149a366-b712-4833-b955-87d313acf7d4.png"><img src="https://user-images.githubusercontent.com/8609142/207548259-3149a366-b712-4833-b955-87d313acf7d4.png" alt="image" style="max-width: 100%;"></a></p>
+<p dir="auto">因此与其被 AQE 优化为 local shuffle read, 不如禁用掉这个优化，直接采用 reducer 侧拉取单一 partition 的数据，使得网络连接降低，随机 IO 也会大幅度的减少. 具体优化详见：<a class="commit-link" data-hovercard-type="commit" data-hovercard-url="https://github.com/apache/incubator-uniffle/commit/85b7b3b95539bc23f0ca0ea594539d1c5b40c614/hovercard" href="https://github.com/apache/incubator-uniffle/commit/85b7b3b95539bc23f0ca0ea594539d1c5b40c614">apache/incubator-uniffle@<tt>85b7b3b</tt></a></p>
+<h4 dir="auto">Attention</h4>
+<p dir="auto">可是当在 uniffle 中禁用 localShuffleRead 后，发现在 Spark AQE <code class="notranslate">SortMergeJoin</code> -&gt; <code class="notranslate">BroadcastHashJoin</code> 优化下，如果非 broadcast 的一侧数据的部分 partition 非常巨大的情况下，却是不会应用 Spark skew join 的优化的。因此这部分需要支持下，这部分代码我们会尽快提交到 Spark 社区，uniffle 侧详见：<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1679873689" data-permission-text="Title is private" data-url="https://github.com/apache/incubator-uniffle/issues/838" data-hovercard-type="issue" data-hovercard-url="/apache/incubator-uniffle/issues/838/hovercard" href="https://github.com/apache/incubator-uniffle/issues/838">apache/incubator-uniffle#838</a></p>
+<p dir="auto">至于如何对 <code class="notranslate">BroadcastHashJoin</code> 对 skew join 进行切分数据的优化呢？可以参照此 PR：<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="866917043" data-permission-text="Title is private" data-url="https://github.com/apache/spark/issues/32328" data-hovercard-type="pull_request" data-hovercard-url="/apache/spark/pull/32328/hovercard" href="https://github.com/apache/spark/pull/32328">apache/spark#32328</a></p>
+<h2 dir="auto">Data skew</h2>
+<p dir="auto">得益于 AQE 的机制，在数据处理的过程中，数据倾斜不再是一个大的问题。但是对 AQE + RSS(Uniffle) 来说，却产生了一些设计上的取舍。</p>
+<h3 dir="auto">AQE 优化机制</h3>
+<p dir="auto">先论 AQE 如何处理 data skew 的情况，在 shuffle write 时，每个 shuffleWriter 都会将此 writer 上的 record 归属于的 partitionId 和出现数目汇总于 driver, 因此在完成 stage 上游的 shuffle write 后，driver 就根据 data skew 设定的阈值判定数据是否倾斜和数据是否过小。</p>
+<p dir="auto">针对于数据的倾斜，则会将此数据切分为多份，供多个 reducer 处理，以期达到一致的处理时间。如对于 partitionId: 1 的数据过大，在被AQE 切分为两份后，则会设定为不同的 spec:<code class="notranslate"> (partitionStart-1, partitionEnd-1, mapStartIndex:0, mapEndIndex: 100)</code>,  <code class="notranslate">(partitionId-1, mapStartIndex:100, mapEndIndex: Integer.MAX)</code>.</p>
+<p dir="auto">很自然，如对于数据过小的数据 partition 3 和 4，则AQE 会合并到一个 reducer 来处理，spec: （partitionStart-3, partitionEnd-4, mapStartindex-0, mapEndIndex: Interger.MAX)</p>
+<h3 dir="auto">RSS 设计优化</h3>
+<p dir="auto">数据过小导致的合并，在 RSS 中天然支持，因为 RSS 能否针对特定的 partition 来拉取数据，因此此时相当于一个 reducer 去向 shuffle-server 请求两个 partition。</p>
+<p dir="auto">但是对于数据倾斜的情况，在之前版本的 Uniffle 则会出现一些问题，如下</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>过大的 partition 导致 shuffle server 上的本地磁盘被写满，进而导致常规的 shuffle 数据被 evict，任务大面积失败</li>
+<li>过大的 partition 在被切分为 n 个 reducer 后，任务运行并发过大，导致 shuffle server 网卡被打满</li>
+<li>过大的 partition 读取时，不支持根据 mapId 来过滤，导致读取的数据量被放大，且任务运行速度变慢</li>
+<li>过大的 partition 写入时流量过大，写入磁盘速率跟不上 receive 速度，导致常规 app 受影响</li>
+</ol>
+<p dir="auto">从上述原理上分析来看，解决这个问题可以从两个方面入手</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>shuffle 数据支持 mapId 来过滤，降低端上过滤造成的性能下降</li>
+<li>大 partition 数据写入到分布式存储 HDFS，降低写入时对本地磁盘的压力，读取则将压力卸载到 HDFS 不同的 datanode</li>
+</ol>
+<h3 dir="auto">读取优化: partition shuffle data 支持 mapId 过滤</h3>
+<p dir="auto">在某个 partition 数据写入 shuffle server 时，除了数据，还携带一个 blockId (由 mapId, partitionId, 自增字符三者组成)，因此写入的数据是携带有 mapId 的。依据 uniffle 的设计原理，写入的数据会先在内存中暂存，攒一批后批量 append 写入到对应 partition 的分区文件中(分别写入到 index file 和 data file). 其中 index file 会存放 blockId 和其对应的数据在 data file 中的 offset.</p>
+<p dir="auto">基于上述，我们需要根据 mapId 来排序此分区文件。因此有两种方案 LOCAL_ORDER 和 GLOBAL_ODER</p>
+<h4 dir="auto">LOCAL_ORDER</h4>
+<p dir="auto"><strong>LOCAL_ORDER 意为对单个 partition 来说，从 MAPID 而言是局部有序</strong></p>
+<p dir="auto">基于 uniffle 会在内存中攒一批 partition 的数据，我们可以将写入磁盘的数据进行排序后再 append 到磁盘。因此基于这个假设，每次刷写的数据量为 56M，则分区文件中的数据顺序根据 mapId 来看，则是部分有序的。</p>
+<p dir="auto">因此 client 在读取时，则可以根据 index file 找到每一段部分有序的数据，来去 data file 进行跳读。此方案假设是内存足够且各个应用间抢占不明显。</p>
+<p dir="auto">Uniffle 当前默认采用此种机制。</p>
+<h4 dir="auto">GLOBAL_ORDER</h4>
+<p dir="auto"><strong>GLOBAL_ORDER 意为对单个 partition 来说，从 MAPID 而言是全局有序</strong></p>
+<p dir="auto">GLOBAL_ORDER 则是在所有数据写入到分区文件后，在第一次 reducer 发起读取请求时，发现是被 AQE 优化的，则进行一次全局加锁的分区文件全局排序。</p>
+<p dir="auto">因此，排序完成后对 client 来说，则只需要进行一次顺序读取。但是因为需要等待排序完成，此过程耗时未知，且耗费 shuffle server 资源，因此未做尝试。</p>
+<p dir="auto">在进行上述优化，AQE 数据倾斜场景相较于原先 Uniffle 性能提升近 3.5 倍！</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>Uniffle PR：<a class="commit-link" data-hovercard-type="commit" data-hovercard-url="https://github.com/apache/incubator-uniffle/commit/74949f53f611cb4a65ffb1e0b083893980c79419/hovercard" href="https://github.com/apache/incubator-uniffle/commit/74949f53f611cb4a65ffb1e0b083893980c79419">apache/incubator-uniffle@<tt>74949f5</tt></a>.</li>
+<li>Proposal  :  <a href="https://docs.google.com/document/d/1G0cOFVJbYLf2oX1fiadh7zi2M6DlEcjTQTh4kSkb0LA/edit" rel="nofollow">https://docs.google.com/document/d/1G0cOFVJbYLf2oX1fiadh7zi2M6DlEcjTQTh4kSkb0LA/edit</a></li>
+</ol>
+<h3 dir="auto">写入优化：Huge partition 发现与限制</h3>
+<p dir="auto">上述在 AQE 中对大 partition 的 skew 优化，也已经提及到对 huge partition 的处理，本章叙述下可采用的思路和实现。</p>
+<p dir="auto">首先因为受限于 RSS 本身的机制，是将多个 map 产出的相同 partition 的数据聚合在一起。如果一个 partition 的巨大(线上可达 20T)，则对本地磁盘造成巨大压力，包括高写入速率和触发容量限制</p>
+<p dir="auto">处理这种情况，无法是两种方案</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>压力分散到不同的后端 shuffle server，暂且称为 dynamic partition spilt</li>
+<li>压力分散到分布式存储，比如 S3 或者是 HDFS，暂且称为 partition upload to HDFS</li>
+</ol>
+<h4 dir="auto">Dynamic partition split</h4>
+<p dir="auto">动态分区 split 策略，是一旦单个 partition 达到了大分区的阈值(比如 20g), 则触发一个 split 信号，接下来写入侧则切换到下一个 server 来写入。优势是无需借助到分布式存储，且本地磁盘写入速率快，可承载压力大。缺点是整体大分区容量受限于 RSS 集群容量，并且因为一个 partition 写入到多个 shuffle server, 但写入时并未与读取的顺序对齐，因此每一个经过 AQE 的 reducer 都需要去连接每一台拥有此分区的 shuffle server 来获取，连接数过高，且效率不高。（此方案仍可以优化，但因为 uniffle 对单个 partition 采用静态分配，因此未采用）</p>
+<p dir="auto"><strong>TIPS</strong> : 此方案被 celeborn 所采用，在 uniffle 支持 dynamic assignment 后也可实现</p>
+<h4 dir="auto">Partition upload to HDFS</h4>
+<p dir="auto">将大 partition 写入到 HDFS，也是受益于 uniffle multiple tier storages 的机制 ( Flink 在最近的版本中 shuffle 也采用 multiple storages). 简单介绍下 multiple storages. 主要分为三级：memory -&gt; local disk -&gt; HDFS/S3 etc...</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>memory 作为高速率写入的缓冲</li>
+<li>local disk 提高持久化高速存储</li>
+<li>HDFS 支持无限容量和负载均衡式并行读取</li>
+</ol>
+<p dir="auto">得益于本身的机制，因此未做很多改造。但是原先 uniffle 中对 HDFS 的用法，是将在 memory 中聚合超过 64m 就写入 HDFS，但实测效果不佳，并且也没有充分利用闲置的本地磁盘。因为做了一些新的 huge partition 的特性来满足，包括如下</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>对 huge partition 定量限制，一旦达到某个阈值，就直接写入 HDFS。但因为 HDFS 写入速率不高，且大分区接收速率非常快，通过实现了将一个 partition 并行写入多个(并行度可配置) HDFS 文件，来实现可伸缩扩展的高速写入。也弥补了 HDFS 的速率缺陷</li>
+<li>uniffle 中的所有数据都会在内存中暂留，且未多每个 app 做 memory quota 限制。但是 huge partition 写入速率高导致占用内存多，进一步影响了正常分区的任务。因此就引入了 huge partition memory limitation.</li>
+</ol>
+<p dir="auto">通过上述优化，现在线上的大分区任务都正常运行。但是前提是通过牺牲 huge partition 的速度来满足常规任务的稳定性, 后续会进一步优化大分区任务的速度</p>
+<h2 dir="auto">Reference</h2>
+<ul class="list-disc list-outside" dir="auto">
+<li><a href="https://www.waitingforcode.com/apache-spark-sql/what-new-apache-spark-3-local-shuffle-reader/read" rel="nofollow">https://www.waitingforcode.com/apache-spark-sql/what-new-apache-spark-3-local-shuffle-reader/read</a></li>
+<li><a href="https://www.waitingforcode.com/apache-spark-sql/whats-new-apache-spark-3-join-skew-optimization/read#algorithm" rel="nofollow">https://www.waitingforcode.com/apache-spark-sql/whats-new-apache-spark-3-join-skew-optimization/read#algorithm</a></li>
+</ul>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <div class="pt-10 pb-16">
+                <script src="https://utteranc.es/client.js"
+                        repo="zuston/zuston.github.io"
+                        issue-term="pathname"
+                        theme="github-light"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            </div>
+            <footer>
+    <div class="sm:px-8">
+        <div class="mx-auto max-w-7xl lg:px-8">
+            <div class="border-t border-zinc-100 pt-10 pb-16 dark:border-zinc-700/40">
+                <div class="relative px-4 sm:px-8 lg:px-12">
+                    <div class="mx-auto max-w-2xl lg:max-w-5xl">
+                        <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                            <div class="flex gap-6 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                                <a class="transition hover:text-teal-500 dark:hover:text-teal-400" href="/">Home</a>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">©
+                                    <!-- -->2023
+                                    <!-- --> zuston. All rights reserved.
+                                </p>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">
+                                    Powered by <a href="https://github.com/zuston/lizi" class="text-gray-800 dark:text-white">lizi</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</footer>
+        </div>
+    </div>
+    <link rel="stylesheet" href="/css/color-modes.css">
+    <link rel="stylesheet" href="/css/post.css">
+    <link rel="stylesheet" href="/css/markdown.css">
+    <link rel="stylesheet" href="/css/base.css">
+</body>
+
+</html>

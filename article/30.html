@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html class="h-full antialiased" lang="en">
+
+<head>
+    <meta charSet="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>SPIP: Add better handling for node shutdown 解读</title>
+    <meta name="description" content="Motivation
+为什么我们在 Spark 中需要 node decommission 这个特性？SPARK-20624 详细阐述了我们需要它的理由
+
+
+在云上环境，如果你使用了 spot instances 实例，那么这就意味着 instances 不是稳定的，随时" />
+    <script src="/js/tailwindcss.js"></script>
+</head>
+
+<body class="flex h-full flex-col bg-zinc-50 dark:bg-black">
+    <div id="__next">
+        <div class="fixed inset-0 flex justify-center sm:px-8">
+            <div class="flex w-full max-w-7xl lg:px-8">
+                <div class="w-full bg-white ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-300/20"></div>
+            </div>
+        </div>
+        <div>
+            <nav id="header">
+    <div class="bg-gray-100">
+        <header class="sticky top-0 z-30 w-full px-2 py-4 bg-white sm:px-4 shadow  dark:bg-slate-800">
+            <div class="flex items-center justify-between mx-auto max-w-5xl">
+                <a href="/">
+                    <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-200">show notes</span>
+                </a>
+                <div class="flex items-center space-x-1">
+                    <ul class="hidden space-x-2 md:inline-flex">
+                        <li><a href="/" class="px-4 py-2 font-semibold text-gray-600 rounded dark:text-white">Home</a></li>
+                    </ul>
+                    <div class="inline-flex md:hidden">
+                        <button class="flex-none px-2 ">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                            </svg>
+                            <span class="sr-only">Open Menu</span>
+                        </button>
+                        <!-- put list item -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+<!--    <div class="w-full flex items-center justify-between mt-0 px-6 py-2">-->
+<!--       <div class="md:flex md:items-center md:w-auto w-full order-3 md:order-1" id="menu">-->
+<!--          <nav >-->
+<!--             <ul class="flex rounded-full bg-white/90 px-3 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur dark:bg-zinc-800/90 dark:text-zinc-200 dark:ring-white/10">-->
+<!--                <li><a class="relative block px-3 py-2 transition hover:text-teal-500 dark:hover:text-teal-400 item-menu" href="/">Home</a></li>-->
+<!--             </ul>-->
+<!--          </nav>-->
+<!--       </div>-->
+<!--       -->
+<!--    </div>-->
+ </nav>
+        </div>
+        <div class="relative">
+            <main>
+                <div class="sm:px-8 mt-6 lg:mt-6">
+                    <div class="mx-auto max-w-6xl lg:px-8">
+                        <div class="relative px-4 sm:px-8 lg:px-12">
+                            <div class="mx-auto max-w-6xl lg:max-w-4xl">
+                                <div class="xl:relative">
+                                    <div class="mx-auto max-w-6xl">
+                                        <article class="dark:text-white">
+                                            <header class="flex flex-col">
+                                                <h1
+                                                    class="mt-6 text-4xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100 sm:text-5xl">
+                                                    SPIP: Add better handling for node shutdown 解读</h1>
+                                                <div class="flex w-full items-center justify-between pb-3 mt-6">
+                                                    <div class="flex items-center space-x-3">
+                                                        <div class="text-xs text-neutral-500">
+                                                            2022-10-30</div>
+                                                    </div>
+                                                    <div class="flex items-center space-x-8">
+                                                        
+                                                    </div>
+                                                </div>
+                                            </header>
+                                            <div class="mt-8">
+                                                <div
+                                                    class="d-block color-fg-default comment-body markdown-body js-comment-body">
+                                                    <h2 dir="auto">Motivation</h2>
+<p dir="auto">为什么我们在 Spark 中需要 node decommission 这个特性？SPARK-20624 详细阐述了我们需要它的理由</p>
+<ul class="list-disc list-outside" dir="auto">
+<li>
+<p dir="auto">在云上环境，如果你使用了 spot instances 实例，那么这就意味着 instances 不是稳定的，随时可能被抢占或关停，这就导致你不得不重算在 instance 上的数据</p>
+</li>
+<li>
+<p dir="auto">在一个共享集群中，因有些 job 有着更高的优先级，就会抢占低优先级任务</p>
+</li>
+</ul>
+<p dir="auto">同时这个方案也是为了对 Yarn 的弹性混部的 Spark 进行稳定性优化，提供一些思路。</p>
+<p dir="auto">这其中最重要的点，就是 executor shutdown, 将会导致需要对 shuffle 和 cache 数据的重算。Node decommission 这个特性，使得我们可以将 block 和 shuffle 数据迁移到其他 executor 上，降低 shutdown 对任务的影响。</p>
+<p dir="auto">以下将会从 decommission 的 metadata(将 executor 在 driver 侧标记，并触发 decommission) 和 data migration(触发后，完成 rdd 和 shuffle block 的迁移) 两部分来解读</p>
+<h2 dir="auto">Decommission trigger (metadata)</h2>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/171084744-ff8347b5-4d82-4fb9-991c-dc917c05cfad.png"><img src="https://user-images.githubusercontent.com/8609142/171084744-ff8347b5-4d82-4fb9-991c-dc917c05cfad.png" alt="image" style="max-width: 100%;"></a></p>
+<p dir="auto">一旦 driver 收到 node decommission 的消息，就会将此 node 下的 executor 都通知为进入 decommissioning 状态，并将其从 scheduler 侧 exclude, 避免 task 被 assign 过去。</p>
+<p dir="auto">同时，executor 在被标记为 decommission 后，就会进行上述的 data migration 流程（如果参数开启的话）</p>
+<h2 dir="auto">Data migration</h2>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/171083068-d7a6867d-c301-4a91-b82d-7a00e7dc7886.png"><img src="https://user-images.githubusercontent.com/8609142/171083068-d7a6867d-c301-4a91-b82d-7a00e7dc7886.png" alt="image" style="max-width: 100%;"></a></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto" data-snippet-clipboard-copy-content="# 参数控制了是否允许进行 executor decommission
+spark.decommission.enabled
+
+# 参数控制了是否要进行 data migration
+spark.storage.decommission.enabled
+
+# 参数控制了是否要对 shuffle block 进行 migration
+spark.storage.decommission.shuffleBlocks.enabled
+
+# 控制 rdd block 迁移
+spark.storage.decommission.rddBlocks.enabled"><pre class="notranslate"><span class="pl-c"><span class="pl-c">#</span> 参数控制了是否允许进行 executor decommission</span>
+spark.decommission.enabled
+
+<span class="pl-c"><span class="pl-c">#</span> 参数控制了是否要进行 data migration</span>
+spark.storage.decommission.enabled
+
+<span class="pl-c"><span class="pl-c">#</span> 参数控制了是否要对 shuffle block 进行 migration</span>
+spark.storage.decommission.shuffleBlocks.enabled
+
+<span class="pl-c"><span class="pl-c">#</span> 控制 rdd block 迁移</span>
+spark.storage.decommission.rddBlocks.enabled</pre></div>
+<h3 dir="auto">代码分析 - Driver</h3>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto" dir="auto" data-snippet-clipboard-copy-content="
+// 代码路径： core/src/main/scala/org/apache/spark/scheduler/cluster/CoarseGrainedSchedulerBackend.scala
+
+  /**
+   * Request that the cluster manager decommission the specified executors.
+   *
+   * @param executorsAndDecomInfo Identifiers of executors &amp; decommission info.
+   * @param adjustTargetNumExecutors whether the target number of executors will be adjusted down
+   *                                 after these executors have been decommissioned.
+   * @param triggeredByExecutor whether the decommission is triggered at executor.
+   * @return the ids of the executors acknowledged by the cluster manager to be removed.
+   */
+  override def decommissionExecutors(
+      executorsAndDecomInfo: Array[(String, ExecutorDecommissionInfo)],
+      adjustTargetNumExecutors: Boolean,
+      triggeredByExecutor: Boolean): Seq[String] = withLock {
+    // Do not change this code without running the K8s integration suites
+    val executorsToDecommission = executorsAndDecomInfo.flatMap { case (executorId, decomInfo) =&gt;
+      // Only bother decommissioning executors which are alive.
+      if (isExecutorActive(executorId)) {
+        scheduler.executorDecommission(executorId, decomInfo)
+        executorsPendingDecommission(executorId) = decomInfo.workerHost
+        Some(executorId)
+      } else {
+        None
+      }
+    }
+    logInfo(s&quot;Decommission executors: ${executorsToDecommission.mkString(&quot;, &quot;)}&quot;)
+
+    // If we don't want to replace the executors we are decommissioning
+    if (adjustTargetNumExecutors) {
+      adjustExecutors(executorsToDecommission)
+    }
+
+    // Mark those corresponding BlockManagers as decommissioned first before we sending
+    // decommission notification to executors. So, it's less likely to lead to the race
+    // condition where `getPeer` request from the decommissioned executor comes first
+    // before the BlockManagers are marked as decommissioned.
+    // Note that marking BlockManager as decommissioned doesn't need depend on
+    // `spark.storage.decommission.enabled`. Because it's meaningless to save more blocks
+    // for the BlockManager since the executor will be shutdown soon.
+    scheduler.sc.env.blockManager.master.decommissionBlockManagers(executorsToDecommission)
+
+    if (!triggeredByExecutor) {
+      executorsToDecommission.foreach { executorId =&gt;
+        logInfo(s&quot;Notify executor $executorId to decommissioning.&quot;)
+        executorDataMap(executorId).executorEndpoint.send(DecommissionExecutor)
+      }
+    }
+
+    conf.get(EXECUTOR_DECOMMISSION_FORCE_KILL_TIMEOUT).map { cleanupInterval =&gt;
+      val cleanupTask = new Runnable() {
+        override def run(): Unit = Utils.tryLogNonFatalError {
+          val stragglers = CoarseGrainedSchedulerBackend.this.synchronized {
+            executorsToDecommission.filter(executorsPendingDecommission.contains)
+          }
+          if (stragglers.nonEmpty) {
+            logInfo(s&quot;${stragglers.toList} failed to decommission in ${cleanupInterval}, killing.&quot;)
+            killExecutors(stragglers, false, false, true)
+          }
+        }
+      }
+      cleanupService.map(_.schedule(cleanupTask, cleanupInterval, TimeUnit.SECONDS))
+    }
+
+    executorsToDecommission
+  }
+"><pre class="notranslate"><span class="pl-c">// 代码路径： core/src/main/scala/org/apache/spark/scheduler/cluster/CoarseGrainedSchedulerBackend.scala</span>
+
+  <span class="pl-c">/**</span>
+<span class="pl-c">   * Request that the cluster manager decommission the specified executors.</span>
+<span class="pl-c">   *</span>
+<span class="pl-c">   * @param executorsAndDecomInfo Identifiers of executors &amp; decommission info.</span>
+<span class="pl-c">   * @param adjustTargetNumExecutors whether the target number of executors will be adjusted down</span>
+<span class="pl-c">   *                                 after these executors have been decommissioned.</span>
+<span class="pl-c">   * @param triggeredByExecutor whether the decommission is triggered at executor.</span>
+<span class="pl-c">   * @return the ids of the executors acknowledged by the cluster manager to be removed.</span>
+<span class="pl-c">   */</span>
+  <span class="pl-smi">override</span> <span class="pl-s1">def</span> <span class="pl-en">decommissionExecutors</span>(
+      <span class="pl-s1">executorsAndDecomInfo</span>: <span class="pl-s1">Array</span>[(<span class="pl-s1">String</span>, <span class="pl-s1">ExecutorDecommissionInfo</span>)],
+      <span class="pl-s1">adjustTargetNumExecutors</span>: <span class="pl-s1">Boolean</span>,
+      <span class="pl-s1">triggeredByExecutor</span>: <span class="pl-s1">Boolean</span>): <span class="pl-s1">Seq</span>[<span class="pl-s1">String</span>] = <span class="pl-s1">withLock</span> {
+    <span class="pl-c">// Do not change this code without running the K8s integration suites</span>
+    <span class="pl-smi">val</span> <span class="pl-s1">executorsToDecommission</span> = <span class="pl-smi">executorsAndDecomInfo</span>.<span class="pl-smi">flatMap</span> { <span class="pl-en">case</span> (<span class="pl-s1">executorId</span>, <span class="pl-s1">decomInfo</span>) =&gt;
+      <span class="pl-c">// Only bother decommissioning executors which are alive.</span>
+      <span class="pl-en">if</span> (<span class="pl-en">isExecutorActive</span>(<span class="pl-s1">executorId</span>)) {
+        <span class="pl-s1">scheduler</span>.<span class="pl-en">executorDecommission</span>(<span class="pl-s1">executorId</span>, <span class="pl-s1">decomInfo</span>)
+        <span class="pl-en">executorsPendingDecommission</span>(<span class="pl-s1">executorId</span>) = <span class="pl-smi">decomInfo</span>.<span class="pl-smi">workerHost</span>
+        <span class="pl-en">Some</span>(<span class="pl-s1">executorId</span>)
+      } <span class="pl-s1">else</span> {
+        <span class="pl-s1">None</span>
+      }
+    }
+    <span class="pl-s1">logInfo</span>(<span class="pl-s1">s</span><span class="pl-s">"Decommission executors: ${executorsToDecommission.mkString("</span>, <span class="pl-s">")}"</span>)
+
+    <span class="pl-c">// If we don't want to replace the executors we are decommissioning</span>
+    <span class="pl-k">if</span> (<span class="pl-s1">adjustTargetNumExecutors</span>) {
+      <span class="pl-en">adjustExecutors</span>(<span class="pl-s1">executorsToDecommission</span>)
+    }
+
+    <span class="pl-c">// Mark those corresponding BlockManagers as decommissioned first before we sending</span>
+    <span class="pl-c">// decommission notification to executors. So, it's less likely to lead to the race</span>
+    <span class="pl-c">// condition where `getPeer` request from the decommissioned executor comes first</span>
+    <span class="pl-c">// before the BlockManagers are marked as decommissioned.</span>
+    <span class="pl-c">// Note that marking BlockManager as decommissioned doesn't need depend on</span>
+    <span class="pl-c">// `spark.storage.decommission.enabled`. Because it's meaningless to save more blocks</span>
+    <span class="pl-c">// for the BlockManager since the executor will be shutdown soon.</span>
+    <span class="pl-s1">scheduler</span>.<span class="pl-s1">sc</span>.<span class="pl-s1">env</span>.<span class="pl-s1">blockManager</span>.<span class="pl-s1">master</span>.<span class="pl-en">decommissionBlockManagers</span>(<span class="pl-s1">executorsToDecommission</span>)
+
+    <span class="pl-k">if</span> (!<span class="pl-s1">triggeredByExecutor</span>) {
+      <span class="pl-smi">executorsToDecommission</span>.<span class="pl-smi">foreach</span> { <span class="pl-s1">executorId</span> =&gt;
+        <span class="pl-en">logInfo</span>(<span class="pl-s1">s</span><span class="pl-s">"Notify executor $executorId to decommissioning."</span>)
+        <span class="pl-s1">executorDataMap</span>(<span class="pl-s1">executorId</span>).<span class="pl-s1">executorEndpoint</span>.<span class="pl-en">send</span>(<span class="pl-s1">DecommissionExecutor</span>)
+      }
+    }
+
+    <span class="pl-s1">conf</span>.<span class="pl-en">get</span>(<span class="pl-c1">EXECUTOR_DECOMMISSION_FORCE_KILL_TIMEOUT</span>).<span class="pl-s1">map</span> { <span class="pl-s1">cleanupInterval</span> =&gt;
+      <span class="pl-smi">val</span> <span class="pl-s1">cleanupTask</span> = <span class="pl-k">new</span> <span class="pl-s1">Runnable</span>() {
+        <span class="pl-smi">override</span> <span class="pl-s1">def</span> <span class="pl-s1">run</span>(): <span class="pl-s1">Unit</span> = <span class="pl-smi">Utils</span>.<span class="pl-smi">tryLogNonFatalError</span> {
+          <span class="pl-smi">val</span> <span class="pl-s1">stragglers</span> = <span class="pl-smi">CoarseGrainedSchedulerBackend</span>.<span class="pl-smi">this</span>.<span class="pl-smi">synchronized</span> {
+            <span class="pl-s1">executorsToDecommission</span>.<span class="pl-en">filter</span>(<span class="pl-s1">executorsPendingDecommission</span>.<span class="pl-s1">contains</span>)
+          }
+          <span class="pl-en">if</span> (<span class="pl-s1">stragglers</span>.<span class="pl-s1">nonEmpty</span>) {
+            <span class="pl-en">logInfo</span>(<span class="pl-s1">s</span><span class="pl-s">"${stragglers.toList} failed to decommission in ${cleanupInterval}, killing."</span>)
+            <span class="pl-en">killExecutors</span>(<span class="pl-s1">stragglers</span>, <span class="pl-c1">false</span>, <span class="pl-c1">false</span>, <span class="pl-c1">true</span>)
+          }
+        }
+      }
+      <span class="pl-s1">cleanupService</span>.<span class="pl-s1">map</span>(<span class="pl-smi">_</span>.<span class="pl-smi">schedule</span>(<span class="pl-s1">cleanupTask</span>, <span class="pl-smi">cleanupInterval</span><span class="pl-s1"></span>, <span class="pl-smi">TimeUnit</span>.<span class="pl-smi">SECONDS</span>))
+    }
+
+    <span class="pl-s1">executorsToDecommission</span>
+  }</pre></div>
+<h3 dir="auto">代码分析-Executor decommission</h3>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto" dir="auto" data-snippet-clipboard-copy-content="// 代码路径：core/src/main/scala/org/apache/spark/executor/CoarseGrainedExecutorBackend.scala
+
+  private def decommissionSelf(): Unit = {
+    if (!env.conf.get(DECOMMISSION_ENABLED)) {
+      logWarning(s&quot;Receive decommission request, but decommission feature is disabled.&quot;)
+      return
+    } else if (decommissioned) {
+      logWarning(s&quot;Executor $executorId already started decommissioning.&quot;)
+      return
+    }
+    val msg = s&quot;Decommission executor $executorId.&quot;
+    logInfo(msg)
+    try {
+      decommissioned = true
+      val migrationEnabled = env.conf.get(STORAGE_DECOMMISSION_ENABLED) &amp;&amp;
+        (env.conf.get(STORAGE_DECOMMISSION_RDD_BLOCKS_ENABLED) ||
+          env.conf.get(STORAGE_DECOMMISSION_SHUFFLE_BLOCKS_ENABLED))
+      if (migrationEnabled) {
+        env.blockManager.decommissionBlockManager()
+      } else if (env.conf.get(STORAGE_DECOMMISSION_ENABLED)) {
+        logError(s&quot;Storage decommissioning attempted but neither &quot; +
+          s&quot;${STORAGE_DECOMMISSION_SHUFFLE_BLOCKS_ENABLED.key} or &quot; +
+          s&quot;${STORAGE_DECOMMISSION_RDD_BLOCKS_ENABLED.key} is enabled &quot;)
+      }
+      if (executor != null) {
+        executor.decommission()
+      }
+      // Shutdown the executor once all tasks are gone &amp; any configured migrations completed.
+      // Detecting migrations completion doesn't need to be perfect and we want to minimize the
+      // overhead for executors that are not in decommissioning state as overall that will be
+      // more of the executors. For example, this will not catch a block which is already in
+      // the process of being put from a remote executor before migration starts. This trade-off
+      // is viewed as acceptable to minimize introduction of any new locking structures in critical
+      // code paths.
+
+      val shutdownThread = new Thread(&quot;wait-for-blocks-to-migrate&quot;) {
+        override def run(): Unit = {
+          var lastTaskRunningTime = System.nanoTime()
+          val sleep_time = 1000 // 1s
+          // This config is internal and only used by unit tests to force an executor
+          // to hang around for longer when decommissioned.
+          val initialSleepMillis = env.conf.getInt(
+            &quot;spark.test.executor.decommission.initial.sleep.millis&quot;, sleep_time)
+          if (initialSleepMillis &gt; 0) {
+            Thread.sleep(initialSleepMillis)
+          }
+          while (true) {
+            logInfo(&quot;Checking to see if we can shutdown.&quot;)
+            if (executor == null || executor.numRunningTasks == 0) {
+              if (migrationEnabled) {
+                logInfo(&quot;No running tasks, checking migrations&quot;)
+                val (migrationTime, allBlocksMigrated) = env.blockManager.lastMigrationInfo()
+                // We can only trust allBlocksMigrated boolean value if there were no tasks running
+                // since the start of computing it.
+                if (allBlocksMigrated &amp;&amp; (migrationTime &gt; lastTaskRunningTime)) {
+                  logInfo(&quot;No running tasks, all blocks migrated, stopping.&quot;)
+                  exitExecutor(0, ExecutorLossMessage.decommissionFinished, notifyDriver = true)
+                } else {
+                  logInfo(&quot;All blocks not yet migrated.&quot;)
+                }
+              } else {
+                logInfo(&quot;No running tasks, no block migration configured, stopping.&quot;)
+                exitExecutor(0, ExecutorLossMessage.decommissionFinished, notifyDriver = true)
+              }
+            } else {
+              logInfo(s&quot;Blocked from shutdown by ${executor.numRunningTasks} running tasks&quot;)
+              // If there is a running task it could store blocks, so make sure we wait for a
+              // migration loop to complete after the last task is done.
+              // Note: this is only advanced if there is a running task, if there
+              // is no running task but the blocks are not done migrating this does not
+              // move forward.
+              lastTaskRunningTime = System.nanoTime()
+            }
+            Thread.sleep(sleep_time)
+          }
+        }
+      }
+      shutdownThread.setDaemon(true)
+      shutdownThread.start()
+
+      logInfo(&quot;Will exit when finished decommissioning&quot;)
+    } catch {
+      case e: Exception =&gt;
+        decommissioned = false
+        logError(&quot;Unexpected error while decommissioning self&quot;, e)
+    }
+  }
+}
+"><pre class="notranslate"><span class="pl-c">// 代码路径：core/src/main/scala/org/apache/spark/executor/CoarseGrainedExecutorBackend.scala</span>
+
+  <span class="pl-k">private</span> <span class="pl-smi">def</span> <span class="pl-s1">decommissionSelf</span>(): <span class="pl-s1">Unit</span> = {
+    <span class="pl-k">if</span> (!<span class="pl-s1">env</span>.<span class="pl-s1">conf</span>.<span class="pl-en">get</span>(<span class="pl-c1">DECOMMISSION_ENABLED</span>)) {
+      <span class="pl-en">logWarning</span>(<span class="pl-s1">s</span><span class="pl-s">"Receive decommission request, but decommission feature is disabled."</span>)
+      <span class="pl-s1">return</span>
+    } <span class="pl-k">else</span> <span class="pl-k">if</span> (<span class="pl-s1">decommissioned</span>) {
+      <span class="pl-en">logWarning</span>(<span class="pl-s1">s</span><span class="pl-s">"Executor $executorId already started decommissioning."</span>)
+      <span class="pl-s1">return</span>
+    }
+    <span class="pl-smi">val</span> <span class="pl-s1">msg</span> = <span class="pl-s1">s</span><span class="pl-s">"Decommission executor $executorId."</span>
+    <span class="pl-s1">logInfo</span>(<span class="pl-smi">msg</span>)
+    <span class="pl-s1">try</span> {
+      <span class="pl-s1">decommissioned</span> = <span class="pl-c1">true</span>
+      <span class="pl-s1">val</span> <span class="pl-s1">migrationEnabled</span> = <span class="pl-s1">env</span>.<span class="pl-s1">conf</span>.<span class="pl-en">get</span>(<span class="pl-c1">STORAGE_DECOMMISSION_ENABLED</span>) &amp;&amp;
+        (<span class="pl-s1">env</span>.<span class="pl-s1">conf</span>.<span class="pl-en">get</span>(<span class="pl-c1">STORAGE_DECOMMISSION_RDD_BLOCKS_ENABLED</span>) ||
+          <span class="pl-s1">env</span>.<span class="pl-s1">conf</span>.<span class="pl-en">get</span>(<span class="pl-c1">STORAGE_DECOMMISSION_SHUFFLE_BLOCKS_ENABLED</span>))
+      <span class="pl-en">if</span> (<span class="pl-s1">migrationEnabled</span>) {
+        <span class="pl-s1">env</span>.<span class="pl-s1">blockManager</span>.<span class="pl-en">decommissionBlockManager</span>()
+      } <span class="pl-smi">else</span> <span class="pl-s1">if</span> (<span class="pl-s1">env</span>.<span class="pl-s1">conf</span>.<span class="pl-en">get</span>(<span class="pl-c1">STORAGE_DECOMMISSION_ENABLED</span>)) {
+        <span class="pl-en">logError</span>(<span class="pl-s1">s</span><span class="pl-s">"Storage decommissioning attempted but neither "</span> +
+          <span class="pl-s1">s</span><span class="pl-s">"${STORAGE_DECOMMISSION_SHUFFLE_BLOCKS_ENABLED.key} or "</span> +
+          <span class="pl-s1">s</span><span class="pl-s">"${STORAGE_DECOMMISSION_RDD_BLOCKS_ENABLED.key} is enabled "</span>)
+      }
+      <span class="pl-k">if</span> (<span class="pl-s1">executor</span> != <span class="pl-c1">null</span>) {
+        <span class="pl-s1">executor</span>.<span class="pl-en">decommission</span>()
+      }
+      <span class="pl-c">// Shutdown the executor once all tasks are gone &amp; any configured migrations completed.</span>
+      <span class="pl-c">// Detecting migrations completion doesn't need to be perfect and we want to minimize the</span>
+      <span class="pl-c">// overhead for executors that are not in decommissioning state as overall that will be</span>
+      <span class="pl-c">// more of the executors. For example, this will not catch a block which is already in</span>
+      <span class="pl-c">// the process of being put from a remote executor before migration starts. This trade-off</span>
+      <span class="pl-c">// is viewed as acceptable to minimize introduction of any new locking structures in critical</span>
+      <span class="pl-c">// code paths.</span>
+
+      <span class="pl-smi">val</span> <span class="pl-s1">shutdownThread</span> = <span class="pl-k">new</span> <span class="pl-s1">Thread</span>(<span class="pl-s">"wait-for-blocks-to-migrate"</span>) {
+        <span class="pl-smi">override</span> <span class="pl-s1">def</span> <span class="pl-s1">run</span>(): <span class="pl-s1">Unit</span> = {
+          <span class="pl-smi">var</span> <span class="pl-s1">lastTaskRunningTime</span> = <span class="pl-smi">System</span>.<span class="pl-en">nanoTime</span>()
+          <span class="pl-s1">val</span> <span class="pl-s1">sleep_time</span> = <span class="pl-c1">1000</span> <span class="pl-c">// 1s</span>
+          <span class="pl-c">// This config is internal and only used by unit tests to force an executor</span>
+          <span class="pl-c">// to hang around for longer when decommissioned.</span>
+          <span class="pl-s1">val</span> <span class="pl-s1">initialSleepMillis</span> = <span class="pl-s1">env</span>.<span class="pl-s1">conf</span>.<span class="pl-en">getInt</span>(
+            <span class="pl-s">"spark.test.executor.decommission.initial.sleep.millis"</span>, <span class="pl-s1">sleep_time</span>)
+          <span class="pl-en">if</span> (<span class="pl-s1">initialSleepMillis</span> &gt; <span class="pl-c1">0</span>) {
+            <span class="pl-smi">Thread</span>.<span class="pl-en">sleep</span>(<span class="pl-s1">initialSleepMillis</span>)
+          }
+          <span class="pl-smi">while</span> (<span class="pl-smi">true</span>) {
+            <span class="pl-en">logInfo</span>(<span class="pl-s">"Checking to see if we can shutdown."</span>)
+            <span class="pl-k">if</span> (<span class="pl-s1">executor</span> == <span class="pl-c1">null</span> || <span class="pl-s1">executor</span>.<span class="pl-s1">numRunningTasks</span> == <span class="pl-c1">0</span>) {
+              <span class="pl-k">if</span> (<span class="pl-s1">migrationEnabled</span>) {
+                <span class="pl-en">logInfo</span>(<span class="pl-s">"No running tasks, checking migrations"</span>)
+                <span class="pl-en">val</span> (<span class="pl-s1">migrationTime</span>, <span class="pl-s1">allBlocksMigrated</span>) = <span class="pl-s1">env</span>.<span class="pl-s1">blockManager</span>.<span class="pl-en">lastMigrationInfo</span>()
+                <span class="pl-c">// We can only trust allBlocksMigrated boolean value if there were no tasks running</span>
+                <span class="pl-c">// since the start of computing it.</span>
+                <span class="pl-s1">if</span> (<span class="pl-s1">allBlocksMigrated</span> &amp;&amp; (<span class="pl-s1">migrationTime</span> &gt; <span class="pl-s1">lastTaskRunningTime</span>)) {
+                  <span class="pl-en">logInfo</span>(<span class="pl-s">"No running tasks, all blocks migrated, stopping."</span>)
+                  <span class="pl-en">exitExecutor</span>(<span class="pl-c1">0</span>, <span class="pl-smi">ExecutorLossMessage</span>.<span class="pl-s1">decommissionFinished</span>, <span class="pl-s1">notifyDriver</span> = <span class="pl-c1">true</span>)
+                } <span class="pl-k">else</span> {
+                  <span class="pl-en">logInfo</span>(<span class="pl-s">"All blocks not yet migrated."</span>)
+                }
+              } <span class="pl-k">else</span> {
+                <span class="pl-en">logInfo</span>(<span class="pl-s">"No running tasks, no block migration configured, stopping."</span>)
+                <span class="pl-en">exitExecutor</span>(<span class="pl-c1">0</span>, <span class="pl-smi">ExecutorLossMessage</span>.<span class="pl-s1">decommissionFinished</span>, <span class="pl-s1">notifyDriver</span> = <span class="pl-c1">true</span>)
+              }
+            } <span class="pl-s1">else</span> {
+              <span class="pl-en">logInfo</span>(<span class="pl-s1">s</span><span class="pl-s">"Blocked from shutdown by ${executor.numRunningTasks} running tasks"</span>)
+              <span class="pl-c">// If there is a running task it could store blocks, so make sure we wait for a</span>
+              <span class="pl-c">// migration loop to complete after the last task is done.</span>
+              <span class="pl-c">// Note: this is only advanced if there is a running task, if there</span>
+              <span class="pl-c">// is no running task but the blocks are not done migrating this does not</span>
+              <span class="pl-c">// move forward.</span>
+              <span class="pl-s1">lastTaskRunningTime</span> = <span class="pl-smi">System</span>.<span class="pl-en">nanoTime</span>()
+            }
+            <span class="pl-smi">Thread</span>.<span class="pl-smi">sleep</span>(<span class="pl-s1">sleep_time</span>)
+          }
+        }
+      }
+      <span class="pl-s1">shutdownThread</span>.<span class="pl-s1">setDaemon</span>(<span class="pl-smi">true</span>)
+      <span class="pl-s1">shutdownThread</span>.<span class="pl-s1">start</span>()
+
+      <span class="pl-s1">logInfo</span>(<span class="pl-s">"Will exit when finished decommissioning"</span>)
+    } <span class="pl-k">catch</span> {
+      <span class="pl-k">case</span> <span class="pl-s1">e</span>: <span class="pl-s1">Exception</span> =&gt;
+        <span class="pl-s1">decommissioned</span> = <span class="pl-c1">false</span>
+        <span class="pl-s1">logError</span>("<span class="pl-s1">Unexpected</span> <span class="pl-s1">error</span> <span class="pl-k">while</span> <span class="pl-s1">decommissioning</span> <span class="pl-s1">self</span>", <span class="pl-s1">e</span>)
+    }
+  }
+}</pre></div>
+<blockquote>
+<p dir="auto">问题：</p>
+<p dir="auto">此处针对的是 executor 上的data, 如果是开启了 external shuffle service, 则是否会进行 migration 呢？</p>
+</blockquote>
+<h3 dir="auto">深入分析</h3>
+<p dir="auto">对于上述的 decommission trigger 我们暂时先只讨论 yarn 下的模式。在通过 <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1154263027" data-permission-text="Title is private" data-url="https://github.com/apache/spark/issues/35683" data-hovercard-type="pull_request" data-hovercard-url="/apache/spark/pull/35683/hovercard" href="https://github.com/apache/spark/pull/35683">apache/spark#35683</a> 可以让 Spark 感知到 Yarn 的 NodeManager 进入到了 decommission 状态，从而触发 Spark 引擎内部对 node decomission 的触发流程（这边是存在双层调度，Yarn 的资源调度，Spark 的应用层task 调度）。</p>
+<blockquote>
+<p dir="auto">问题：</p>
+<p dir="auto">但是上述的 patch 目前是在禁用了 external shuffle service 情况下才生效的，这是何故？</p>
+</blockquote>
+<p dir="auto">从 PR 的 comment 来看，是因为认为 yarn node decommission 并不意味着，ESS 上的数据需要被迁移。另外还有一点就是 push based shuffle service，需要更多的适配，因为 push -&gt; reducer 时，也需要 check reducer 是否是被标记退役的节点</p>
+<p dir="auto">对于前者，我觉得此处需要考虑两种情况，ESS 是否和需要 decommission 的 host 绑定。</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>
+<p dir="auto">绑定：意味着数据需要迁移，因为 node shutdown, ess 上数据也会丢失</p>
+</li>
+<li>
+<p dir="auto">不绑定：例如 remote shuffle service.</p>
+</li>
+</ol>
+<p dir="auto">单就上述情况来看，<a href="https://github.com/apache/spark/pull/35683" data-hovercard-type="pull_request" data-hovercard-url="/apache/spark/pull/35683/hovercard">SPARK</a> 也不应该直接根据 ESS 开启情况与否，来决定是否触发 decommission. 而是应该加入另外的参数，来表明是否 ESS 与 host 绑定</p>
+<p dir="auto">从 <a href="https://docs.google.com/document/d/1xVO1b6KAwdUhjEJBolVPl9C6sLj7oOveErwDSYdT-pE/edit?usp=sharing" rel="nofollow">Design DOC</a> 设计来看, 是考虑过这一点的。</p>
+<blockquote>
+<p dir="auto">Part 8 (Optional): When there is a node-local external shuffle service</p>
+<p dir="auto">Block migration is only done when an external shuffle service is NOT used OR an entire host is being lost. We'll extend the DecommissionSelf &amp; DecommissionExecutor messages to have a nodeLoss field for situations where an entire host will be lost.</p>
+<p dir="auto">An external shuffle service can either be local to the node or truly off-node (remote). If it is local to the node, then chances are that it is also removed when the node is decommissioned. For example, when YARN and the Standalone scheduler decommission a node, then the external shuffle service on that node would also be removed.</p>
+<p dir="auto">Ideally, we should also implement block migration with an external shuffle service. But a short term fix might be to eagerly clear the shuffle state on decommissioning an executor. (As is done today when a worker is removed by the standalone scheduler). This may save the running job from suffering too many fetch failures/timeouts but it would cost costly re-computation. This approach of forgetting the shuffle state has some overlap with Part 7 above.</p>
+</blockquote>
+<p dir="auto">另外为了应对目前 ESS 不支持 block migration 的情况下，shuffle service 会面临 fetch failed exception 不断重试的情况，<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="651721878" data-permission-text="Title is private" data-url="https://github.com/apache/spark/issues/29014" data-hovercard-type="pull_request" data-hovercard-url="/apache/spark/pull/29014/hovercard" href="https://github.com/apache/spark/pull/29014">apache/spark#29014</a> 缓解了这个问题。用以解决 shuffle service 在 node 被 decomissioned 之后，shuffle read 只重试一次，加快重算的流程。</p>
+<p dir="auto">此 patch 很有意义，因为 NM pod 中的 executor 和 ess 是不同生命周期的。举个例子，executor 被标记为 decommissioned 之后，上面的任务执行完，即退役。而 ESS 则是同 nm 同周期，生命周期 &gt;= executor.</p>
+<p dir="auto">因此如果直接根据 executor decommissioned 情况，来禁用掉此 executor 的 host 上 ESS, 则对造成很多无用的重算浪费</p>
+<h2 dir="auto">内部的实践</h2>
+<h3 dir="auto">场景</h3>
+<ol class="list-decimal list-outside" dir="auto">
+<li>集群内部有的任务开启了 shuffle service，有的没有。yarn 上的 NM 会存在周期性的 decommission，需要保证 Spark 任务的稳定性，特别是在弹性 yarn NM节点数量较多时</li>
+<li>内部使用 Spark 3.1.1 版本</li>
+</ol>
+<h3 dir="auto">初步实践</h3>
+<h4 dir="auto"><strong>应用patch</strong></h4>
+<ol class="list-decimal list-outside" dir="auto">
+<li>[SPARK-34104][SPARK-34105][CORE][K8S] Maximum decommissioning time &amp; allow decommissioning for excludes</li>
+<li>[SPARK-30835][SPARK-39018][CORE][YARN] Add support for YARN decommissioning when ESS is disabled #35683</li>
+</ol>
+<h4 dir="auto"><strong>改造</strong></h4>
+<p dir="auto">在 ESS 开启时，仍然允许进行 yarn executor 的 decommission 操作</p>
+<h4 dir="auto"><strong>参数</strong></h4>
+<p dir="auto">设置 <code class="notranslate">spark.decommission.enabled=true </code></p>
+<h4 dir="auto">应用上述功能后，可供观测的点</h4>
+<ol class="list-decimal list-outside" dir="auto">
+<li>Driver 侧日志，输出 <code class="notranslate">Decommission executors：xxxx</code>，并据此找到相应的 host, 观察是否在这时间点后被 assign task 了</li>
+<li>在 NM pod 被关闭后，观察 Spark 任务在 fetch 已经下线节点的 shuffle data 的时候，是不是只重试了一次？还是直接就重算？</li>
+</ol>
+<h3 dir="auto">Roadmap</h3>
+<p dir="auto">下一阶段引入 Remote Shuffle Service</p>
+<h2 dir="auto">Reference</h2>
+<ol class="list-decimal list-outside" dir="auto">
+<li><a href="https://issues.apache.org/jira/browse/SPARK-20624" rel="nofollow">https://issues.apache.org/jira/browse/SPARK-20624</a></li>
+<li><a href="https://www.waitingforcode.com/apache-spark/what-new-apache-spark-3.1-nodes-decommissioning/read" rel="nofollow">https://www.waitingforcode.com/apache-spark/what-new-apache-spark-3.1-nodes-decommissioning/read</a></li>
+<li><a href="https://aws.amazon.com/cn/blogs/big-data/spark-enhancements-for-elasticity-and-resiliency-on-amazon-emr/" rel="nofollow">https://aws.amazon.com/cn/blogs/big-data/spark-enhancements-for-elasticity-and-resiliency-on-amazon-emr/</a></li>
+</ol>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <div class="pt-10 pb-16">
+                <script src="https://utteranc.es/client.js"
+                        repo="zuston/zuston.github.io"
+                        issue-term="pathname"
+                        theme="github-light"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            </div>
+            <footer>
+    <div class="sm:px-8">
+        <div class="mx-auto max-w-7xl lg:px-8">
+            <div class="border-t border-zinc-100 pt-10 pb-16 dark:border-zinc-700/40">
+                <div class="relative px-4 sm:px-8 lg:px-12">
+                    <div class="mx-auto max-w-2xl lg:max-w-5xl">
+                        <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                            <div class="flex gap-6 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                                <a class="transition hover:text-teal-500 dark:hover:text-teal-400" href="/">Home</a>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">©
+                                    <!-- -->2023
+                                    <!-- --> zuston. All rights reserved.
+                                </p>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">
+                                    Powered by <a href="https://github.com/zuston/lizi" class="text-gray-800 dark:text-white">lizi</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</footer>
+        </div>
+    </div>
+    <link rel="stylesheet" href="/css/color-modes.css">
+    <link rel="stylesheet" href="/css/post.css">
+    <link rel="stylesheet" href="/css/markdown.css">
+    <link rel="stylesheet" href="/css/base.css">
+</body>
+
+</html>

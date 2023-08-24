@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="h-full antialiased" lang="en">
+
+<head>
+    <meta charSet="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>My first journey of rust</title>
+    <meta name="description" content="During my more than 10 years of programming, I have tried to learn Java/Python/Golang/PHP/JavaScript,
+Of course, C++ and C are painful memories from when I first went to college.
+For me, learning a new programming language is often a painful process," />
+    <script src="/js/tailwindcss.js"></script>
+</head>
+
+<body class="flex h-full flex-col bg-zinc-50 dark:bg-black">
+    <div id="__next">
+        <div class="fixed inset-0 flex justify-center sm:px-8">
+            <div class="flex w-full max-w-7xl lg:px-8">
+                <div class="w-full bg-white ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-300/20"></div>
+            </div>
+        </div>
+        <div>
+            <nav id="header">
+    <div class="bg-gray-100">
+        <header class="sticky top-0 z-30 w-full px-2 py-4 bg-white sm:px-4 shadow  dark:bg-slate-800">
+            <div class="flex items-center justify-between mx-auto max-w-5xl">
+                <a href="/">
+                    <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-200">show notes</span>
+                </a>
+                <div class="flex items-center space-x-1">
+                    <ul class="hidden space-x-2 md:inline-flex">
+                        <li><a href="/" class="px-4 py-2 font-semibold text-gray-600 rounded dark:text-white">Home</a></li>
+                    </ul>
+                    <div class="inline-flex md:hidden">
+                        <button class="flex-none px-2 ">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                            </svg>
+                            <span class="sr-only">Open Menu</span>
+                        </button>
+                        <!-- put list item -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+<!--    <div class="w-full flex items-center justify-between mt-0 px-6 py-2">-->
+<!--       <div class="md:flex md:items-center md:w-auto w-full order-3 md:order-1" id="menu">-->
+<!--          <nav >-->
+<!--             <ul class="flex rounded-full bg-white/90 px-3 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur dark:bg-zinc-800/90 dark:text-zinc-200 dark:ring-white/10">-->
+<!--                <li><a class="relative block px-3 py-2 transition hover:text-teal-500 dark:hover:text-teal-400 item-menu" href="/">Home</a></li>-->
+<!--             </ul>-->
+<!--          </nav>-->
+<!--       </div>-->
+<!--       -->
+<!--    </div>-->
+ </nav>
+        </div>
+        <div class="relative">
+            <main>
+                <div class="sm:px-8 mt-6 lg:mt-6">
+                    <div class="mx-auto max-w-6xl lg:px-8">
+                        <div class="relative px-4 sm:px-8 lg:px-12">
+                            <div class="mx-auto max-w-6xl lg:max-w-4xl">
+                                <div class="xl:relative">
+                                    <div class="mx-auto max-w-6xl">
+                                        <article class="dark:text-white">
+                                            <header class="flex flex-col">
+                                                <h1
+                                                    class="mt-6 text-4xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100 sm:text-5xl">
+                                                    My first journey of rust</h1>
+                                                <div class="flex w-full items-center justify-between pb-3 mt-6">
+                                                    <div class="flex items-center space-x-3">
+                                                        <div class="text-xs text-neutral-500">
+                                                            2023-08-24</div>
+                                                    </div>
+                                                    <div class="flex items-center space-x-8">
+                                                        
+                                                    </div>
+                                                </div>
+                                            </header>
+                                            <div class="mt-8">
+                                                <div
+                                                    class="d-block color-fg-default comment-body markdown-body js-comment-body">
+                                                    <p dir="auto">During my more than 10 years of programming, I have tried to learn Java/Python/Golang/PHP/JavaScript,<br>
+Of course, C++ and C are painful memories from when I first went to college.<br>
+For me, learning a new programming language is often a painful process,<br>
+you have to break some of your grammatical expectations of the previous language,<br>
+and at the same time, the entire language design logic has to be well tuned to yourself,<br>
+Especially for Rust, this process is extremely painful.<br>
+But when you achieve something in a small way, you are also very happy.</p>
+<p dir="auto">After 2 months of trying to learn from the Rust documentation,<br>
+I had an ambitious idea to try to rewrite the <a href="https://github.com/apache/incubator-uniffle">Apache Uniffle</a> server with Rust.</p>
+<p dir="auto">As an important optimization of the big data computing framework,<br>
+Uniffle takes over the shuffle data of a large number of Spark computing tasks, providing<br>
+the writing and reading of temporary data must not only provide high-performance and high-stability,<br>
+but also need to reduce the memory resource consumption as much as possible.<br>
+Because of the terrible GC problem of GRPC Java, in the Java world, Netty is often used to avoid GC.</p>
+<p dir="auto">But this time, because I am full of longing for Rust's GC-free language and performance,<br>
+I also hope that it can give me the basic components for future big data.<br>
+With more imagination, I started to rewrite Apache Uniffle, which is also the beginning of this journey.</p>
+<p dir="auto">Rewriting the Uniffle server is a challenging task.<br>
+The whole rust project includes GRPC protocol support and various types of persistence.<br>
+storage support, asynchronous/synchronous coordination, and more.</p>
+<h3 dir="auto">GRPC support</h3>
+<p dir="auto">In fact, I find that the whole rust world is full of creative and sharing people,<br>
+thanks to good module management, I quickly use tonic<br>
+The framework of the grpc interface protocol has been built.<br>
+But because tonic does not support the use of bytes crate for protobuf bytes, we have to use<br>
+some workarounds ways.</p>
+<p dir="auto">Similarly, compared to Java, the lack of tonic documentation<br>
+and examples prevents me from understanding how to implement monitoring methods for grpc,<br>
+including network connections,throughput, etc. Fortunately, everything is grasping the key points,<br>
+find some projects that also use Tonic to learn its in-depth usage</p>
+<p dir="auto">Anyway, this is a great project for me!</p>
+<h3 dir="auto">Support for multiple storages</h3>
+<p dir="auto">The implementation of uniffle needs to write some large block data to HDFS.<br>
+In fact, I must say that there is no one in the rust world.An easy to use and complete HDFS client.<br>
+Fortunately, Apache opendal provides a basic version of the JNI HDFS client, because my work<br>
+Integrated in the field of big data infrastructure, I can also quickly use opendal to access hdfs.<br>
+For those who have not been exposed to Hadoop, the complicated configuration will take a lot of time.</p>
+<p dir="auto">Thanks to the open source community, I was able to quickly implement support for HDFS.<br>
+At the same time, I also contributed some pull requests to give back to the open source community.</p>
+<h3 dir="auto">tokio's journey</h3>
+<p dir="auto">As far as I know, tokio is already a widely used asynchronous implementation in the Rust community.<br>
+Candy brings happiness, but makes you fat. After using tokio as my asynchronous executor,<br>
+I also successfully ran through the demo with a small amount of data.</p>
+<p dir="auto">But when I use the rust version of uniffle (I call it <code class="notranslate">riffle</code>) to compare with Java uniffle,<br>
+I find that the effect is very poor, and the performance drops by more than 2 times.<br>
+As I started a long journey of investigation and performance improvement,<br>
+I think this also allows me to have a deeper understanding of some features of rust, and to the industrial level<br>
+The RUST implementation went a step further.</p>
+<p dir="auto">First, we enabled cpu profiling and used tikv's jemalloc package,<br>
+which can expose associated cpu counters and draw flame graphs.<br>
+This part is very much thanks to another small partner, which was implemented by him.</p>
+<p dir="auto">But from the flame graph, I didn't see the bottleneck of related performance,<br>
+so unfortunately I continued troubleshooting the problem, and it degenerated to the most basic way of logging.<br>
+In the process, let me guess that it is Tokio's scheduling performance problem,<br>
+because when Riffle receives writes, the concurrency is as high as 4000-5000,<br>
+the read and write pressure is very high.</p>
+<p dir="auto">I've been looking for a painless tool to confirm my hunch.<br>
+<code class="notranslate">tokio console</code> is one option, from its dashboard,<br>
+I found some problems, but I have no way of knowing which crate or code segment is causing it,<br>
+which makes me very worried.</p>
+<p dir="auto">After searching on google, I locked a total, await tree can expose the wait time of an async execution,<br>
+This is so important to me to be able to probe every grpc request where the problem is,<br>
+on which await code section is executing very slowly.</p>
+<p dir="auto">After using it, the problem was immediately exposed. The tokio mutex was causing<br>
+too many context switches and the performance was very bad. in my part<br>
+After replacing the code with std mutex, the performance is obviously improved.<br>
+This is a big trap for beginners, asynchronous lock. It doesn't make you deadlock,<br>
+but it brings serious performance problems under high concurrency. In the future,<br>
+I will also use other tools and develop more metrics to further improve performance.</p>
+<p dir="auto">It's been a really interesting journey, not only implementing an ambitious<br>
+little project from 0 to 1, but also giving me insight into different performance profiles.</p>
+<p dir="auto">Finally, I would like to give a few development suggestions for beginners that<br>
+I have gained during this journey of rust</p>
+<ol class="list-decimal list-outside" dir="auto">
+<li>Don't stare at complicated macros and bitter ownership, as well as advanced features like pins, try to write a project that is the most important.</li>
+<li>Do not use tokio mutex in key performance areas.</li>
+<li>Do not use nested dashmap structure, it is also the cause of performance loss of flamegraph</li>
+</ol>
+<p dir="auto">Attached is my rust journey harvest: <a href="https://github.com/zuston/riffle">https://github.com/zuston/riffle</a></p>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <div class="pt-10 pb-16">
+                <script src="https://utteranc.es/client.js"
+                        repo="zuston/zuston.github.io"
+                        issue-term="pathname"
+                        theme="github-light"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            </div>
+            <footer>
+    <div class="sm:px-8">
+        <div class="mx-auto max-w-7xl lg:px-8">
+            <div class="border-t border-zinc-100 pt-10 pb-16 dark:border-zinc-700/40">
+                <div class="relative px-4 sm:px-8 lg:px-12">
+                    <div class="mx-auto max-w-2xl lg:max-w-5xl">
+                        <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                            <div class="flex gap-6 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                                <a class="transition hover:text-teal-500 dark:hover:text-teal-400" href="/">Home</a>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">©
+                                    <!-- -->2023
+                                    <!-- --> zuston. All rights reserved.
+                                </p>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">
+                                    Powered by <a href="https://github.com/zuston/lizi" class="text-gray-800 dark:text-white">lizi</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</footer>
+        </div>
+    </div>
+    <link rel="stylesheet" href="/css/color-modes.css">
+    <link rel="stylesheet" href="/css/post.css">
+    <link rel="stylesheet" href="/css/markdown.css">
+    <link rel="stylesheet" href="/css/base.css">
+</body>
+
+</html>

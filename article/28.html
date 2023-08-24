@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="h-full antialiased" lang="en">
+
+<head>
+    <meta charSet="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>codespaces + juicefs 实现开发空间的计算与存储分离</title>
+    <meta name="description" content="背景
+得益于网络带宽的提高，大数据领域近些年一直在追求存储与计算分离，来提高计算服务的可扩展性。同时期，云原生崛起，受益于此东风，越来越多的依托于云架构的基础组件被开发" />
+    <script src="/js/tailwindcss.js"></script>
+</head>
+
+<body class="flex h-full flex-col bg-zinc-50 dark:bg-black">
+    <div id="__next">
+        <div class="fixed inset-0 flex justify-center sm:px-8">
+            <div class="flex w-full max-w-7xl lg:px-8">
+                <div class="w-full bg-white ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-300/20"></div>
+            </div>
+        </div>
+        <div>
+            <nav id="header">
+    <div class="bg-gray-100">
+        <header class="sticky top-0 z-30 w-full px-2 py-4 bg-white sm:px-4 shadow  dark:bg-slate-800">
+            <div class="flex items-center justify-between mx-auto max-w-5xl">
+                <a href="/">
+                    <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-200">show notes</span>
+                </a>
+                <div class="flex items-center space-x-1">
+                    <ul class="hidden space-x-2 md:inline-flex">
+                        <li><a href="/" class="px-4 py-2 font-semibold text-gray-600 rounded dark:text-white">Home</a></li>
+                    </ul>
+                    <div class="inline-flex md:hidden">
+                        <button class="flex-none px-2 ">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                            </svg>
+                            <span class="sr-only">Open Menu</span>
+                        </button>
+                        <!-- put list item -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+<!--    <div class="w-full flex items-center justify-between mt-0 px-6 py-2">-->
+<!--       <div class="md:flex md:items-center md:w-auto w-full order-3 md:order-1" id="menu">-->
+<!--          <nav >-->
+<!--             <ul class="flex rounded-full bg-white/90 px-3 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur dark:bg-zinc-800/90 dark:text-zinc-200 dark:ring-white/10">-->
+<!--                <li><a class="relative block px-3 py-2 transition hover:text-teal-500 dark:hover:text-teal-400 item-menu" href="/">Home</a></li>-->
+<!--             </ul>-->
+<!--          </nav>-->
+<!--       </div>-->
+<!--       -->
+<!--    </div>-->
+ </nav>
+        </div>
+        <div class="relative">
+            <main>
+                <div class="sm:px-8 mt-6 lg:mt-6">
+                    <div class="mx-auto max-w-6xl lg:px-8">
+                        <div class="relative px-4 sm:px-8 lg:px-12">
+                            <div class="mx-auto max-w-6xl lg:max-w-4xl">
+                                <div class="xl:relative">
+                                    <div class="mx-auto max-w-6xl">
+                                        <article class="dark:text-white">
+                                            <header class="flex flex-col">
+                                                <h1
+                                                    class="mt-6 text-4xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100 sm:text-5xl">
+                                                    codespaces + juicefs 实现开发空间的计算与存储分离</h1>
+                                                <div class="flex w-full items-center justify-between pb-3 mt-6">
+                                                    <div class="flex items-center space-x-3">
+                                                        <div class="text-xs text-neutral-500">
+                                                            2022-10-30</div>
+                                                    </div>
+                                                    <div class="flex items-center space-x-8">
+                                                        
+                                                    </div>
+                                                </div>
+                                            </header>
+                                            <div class="mt-8">
+                                                <div
+                                                    class="d-block color-fg-default comment-body markdown-body js-comment-body">
+                                                    <h2 dir="auto">背景</h2>
+<p dir="auto">得益于网络带宽的提高，大数据领域近些年一直在追求存储与计算分离，来提高计算服务的可扩展性。同时期，云原生崛起，受益于此东风，越来越多的依托于云架构的基础组件被开发并开源了出来，其中就包括本文的主角 juicefs。另外依托于 azure 云的 github codespaces 服务，也开始面向广大开发者开放。</p>
+<p dir="auto">笔者有幸获得 codespaces 的 beta 服务，开始尝试将一些开源项目的开发迁移到云上的 codespaces 中进行。在初步接触过程中，也发现 codespaces 不仅是个web ide，更是一台性能还不弱的计算实例。但是在这个过程中，遇到了诸多问题，比如线下 mac 和云上的数据和文件不同步，导致需要依靠 http server 来实现一些编译好的文件互传。</p>
+<p dir="auto">不禁思考，为什么不能将开发空间也实现计算和存储分离呢？codespaces/mac 均是计算设备，理论上个人开发者在不同时空上可能会切换使用不同设备，同时因比如编译大型项目、测试分布式训练任务也需要切换不同算力的设备。但是存储希望能够在不同的计算设备间共享，避免掉复杂的手动同步过程。</p>
+<p dir="auto">听起来可行？如何实现？就想到了 juicefs, 一个依托于云上对象存储 + 元数据管理的新型<strong>云原生</strong>文件系统。它将文件系统的树形结构以及其他元信息存储于云上数据库（redis/tikv/mysql...），将分片 chunk 存储于云上对象存储（s3/oss/obs/....），实现了 fuse 挂载，从而提供了一个共享文件系统。不禁为这个想法点赞！</p>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/173087835-50a948aa-d19c-4241-8d5c-c0b32bcff029.png"><img src="https://user-images.githubusercontent.com/8609142/173087835-50a948aa-d19c-4241-8d5c-c0b32bcff029.png" alt="image" style="max-width: 100%;"></a></p>
+<h2 dir="auto">codespaces + juicefs 是个好主意</h2>
+<p dir="auto">说干就干，于是先在 codespaces 实例中验证了下使用 juicefs 的可行性。我们可以通过使用 sqlite 和本地文件系统来模拟 juicefs 单机部署的过程，验证 fuse 在 codespaces 实例中的挂载。</p>
+<h3 dir="auto">可行性验证</h3>
+<p dir="auto">首先在 codespaces 中安装 fuse. 此步骤必需，如果缺失，后续 juicefs 可能不会抛出对应的错误，导致难以排查 root cause.</p>
+<p dir="auto"><code class="notranslate">sudo apt-get install fuse</code></p>
+<p dir="auto">在本地部署单机版的 juicefs</p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto" data-snippet-clipboard-copy-content="# 下载最新版的 juicefs.
+wget https://github.com/juicedata/juicefs/releases/download/v1.0.0-beta3/juicefs-1.0.0-beta3-linux-amd64.tar.gz
+
+tar zxvf juicefs-1.0.0-beta3-linux-amd64.tar.gz
+
+# 初始化 juicefs 元数据引擎和 fs name
+juicefs format sqlite3://myjfs.db myjfs
+
+# 挂载到 codespaces 本地
+juicefs mount sqlite3://myjfs.db ~/jfs"><pre class="notranslate"><span class="pl-c"><span class="pl-c">#</span> 下载最新版的 juicefs.</span>
+wget https://github.com/juicedata/juicefs/releases/download/v1.0.0-beta3/juicefs-1.0.0-beta3-linux-amd64.tar.gz
+
+tar zxvf juicefs-1.0.0-beta3-linux-amd64.tar.gz
+
+<span class="pl-c"><span class="pl-c">#</span> 初始化 juicefs 元数据引擎和 fs name</span>
+juicefs format sqlite3://myjfs.db myjfs
+
+<span class="pl-c"><span class="pl-c">#</span> 挂载到 codespaces 本地</span>
+juicefs mount sqlite3://myjfs.db <span class="pl-k">~</span>/jfs</pre></div>
+<p dir="auto">一切正常，说明在 codespaces 内部使用挂载无问题</p>
+<p dir="auto">详细部署文档可见： <a href="https://juicefs.com/docs/zh/community/quick_start_guide" rel="nofollow">https://juicefs.com/docs/zh/community/quick_start_guide</a></p>
+<h3 dir="auto">申请元数据存储引擎实例 + 对象存储</h3>
+<p dir="auto">上文只是进行一个简单的可行性验证。但是我们为了实现共享的文件系统，需要使用云上的数据库 + 云上的对象存储。</p>
+<p dir="auto">本文笔者使用了 redis cloud 提供的免费 redis 服务，以及七牛云的对象存储。申请过程就不赘述，申请完之后，就需要如下的几个信息</p>
+<ul class="list-disc list-outside" dir="auto">
+<li>
+<p dir="auto">redis 连接串, 包括可访问地址 + 用户名 + 访问密码</p>
+</li>
+<li>
+<p dir="auto">对象存储连接串，包括 endpoint + ak + sk</p>
+</li>
+</ul>
+<blockquote>
+<p dir="auto">Tips:</p>
+<p dir="auto">Juicefs 公司也提供了免费的元数据引擎云服务，因此可以白嫖一波，无需再购买公有云上的 redis 服务。</p>
+<p dir="auto">另外得益于 juicefs 的架构，理论上 webdav 也可以作为 juicefs 的后端存储。（理论上同样可以白嫖阿里云盘）</p>
+</blockquote>
+<h3 dir="auto">部署分布式版本的 juicefs</h3>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto" data-snippet-clipboard-copy-content="# 初始化元数据引擎, 此命令只需初始化一次
+juicefs format \
+    --storage qiniu \
+    --bucket {endpoint} \
+    --access-key {ak} \
+    --secret-key {sk}  \
+    redis://{username}:{pwd}@{redis-url}:{port} \
+    zustonjfs
+
+# 挂载文件系统，此命令可在多个计算实例上执行，获得一个共享的文件系统
+juicefs mount redis://{username}:{pwd}@{redis-url}:{port} ~/jfs
+"><pre class="notranslate"><span class="pl-c"><span class="pl-c">#</span> 初始化元数据引擎, 此命令只需初始化一次</span>
+juicefs format \
+    --storage qiniu \
+    --bucket {endpoint} \
+    --access-key {ak} \
+    --secret-key {sk}  \
+    redis://{username}:{pwd}@{redis-url}:{port} \
+    zustonjfs
+
+<span class="pl-c"><span class="pl-c">#</span> 挂载文件系统，此命令可在多个计算实例上执行，获得一个共享的文件系统</span>
+juicefs mount redis://{username}:{pwd}@{redis-url}:{port} <span class="pl-k">~</span>/jfs
+</pre></div>
+<h3 dir="auto">启动配置集成</h3>
+<p dir="auto">为了实现启动 codespaces 实例，就能自动挂载 juicefs 的文件系统，我们可以直接集成到 codespaces 的 Dockerfile 中。配置上述的 juicefs 挂载命令到 github 项目下的 .devcontainer/Dockerfile 下，如下</p>
+<div class="highlight highlight-source-yaml notranslate position-relative overflow-auto" dir="auto" data-snippet-clipboard-copy-content="ARG VARIANT=8-bullseye
+FROM mcr.microsoft.com/vscode/devcontainers/java:0-${VARIANT}
+
+# [Option] Install Maven
+ARG INSTALL_MAVEN=&quot;true&quot;
+ARG MAVEN_VERSION=&quot;&quot;
+
+RUN mkdir -p /dev_container_install_dir
+WORKDIR /dev_container_install_dir
+
+RUN mv /usr/bin/python /usr/bin/python27
+RUN ln -s /usr/bin/python3.9 /usr/bin/python
+
+RUN wget https://github.com/juicedata/juicefs/releases/download/v1.0.0-beta3/juicefs-1.0.0-beta3-linux-amd64.tar.gz \
+  &amp;&amp; tar zxvf juicefs-1.0.0-beta3-linux-amd64.tar.gz 
+
+RUN ./juicefs mount redis://{username}:{pwd}@{redis-url}:{port} ~/jfs -d"><pre class="notranslate"><span class="pl-s">ARG VARIANT=8-bullseye</span>
+<span class="pl-s">FROM mcr.microsoft.com/vscode/devcontainers/java:0-${VARIANT}</span>
+
+<span class="pl-c"><span class="pl-c">#</span> [Option] Install Maven</span>
+<span class="pl-s">ARG INSTALL_MAVEN="true"</span>
+<span class="pl-s">ARG MAVEN_VERSION=""</span>
+
+<span class="pl-s">RUN mkdir -p /dev_container_install_dir</span>
+<span class="pl-s">WORKDIR /dev_container_install_dir</span>
+
+<span class="pl-s">RUN mv /usr/bin/python /usr/bin/python27</span>
+<span class="pl-s">RUN ln -s /usr/bin/python3.9 /usr/bin/python</span>
+
+<span class="pl-s">RUN wget https://github.com/juicedata/juicefs/releases/download/v1.0.0-beta3/juicefs-1.0.0-beta3-linux-amd64.tar.gz \</span>
+  <span class="pl-s">&amp;&amp; tar zxvf juicefs-1.0.0-beta3-linux-amd64.tar.gz </span>
+
+<span class="pl-s">RUN ./juicefs mount redis://{username}:{pwd}@{redis-url}:{port} ~/jfs -d</span></pre></div>
+<h2 dir="auto">场景举例</h2>
+<h3 dir="auto">云编译</h3>
+<p dir="auto">因为项目需要，经常需要修改和编译 Hadoop、Flink 等大型项目的代码，但编译耗时良久，在 mac 上风扇呼呼的转。</p>
+<p dir="auto">因此可以将项目代码放置在 juicefs 共享文件系统中，在 codespaces 实例中进行编译。同时编译完成的产出物，则直接在 mac 上通过 juicefs 取用测试。</p>
+<h3 dir="auto">云分布式训练</h3>
+<p dir="auto">算法工程师在 mac 上编写的训练程序受限于环境，无法在分布式下得到充分测试。因此使用 codespace 来构建分布式训练就成为了一个可选项。</p>
+<p dir="auto">但是 codespace 目前仅支持转发 http port，为了实现构建 TensorFlow 分布式训练集群，我们需要借助 tailscale 来将多个 codespace 实例组成虚拟局域网。同时为了方便管理编排分布式 TensorFlow，我们使用 Ray 来实现资源调度。</p>
+<p dir="auto">更重要的是，TensorFlow 分布式训练不仅需要共享训练数据，还依赖 checkpoint 来进行容错，因此使用 juicefs 来作为共享文件系统，并通过挂载为本地磁盘来接入。</p>
+<p dir="auto">在采用了上述多个组件后的整体架构图如下：</p>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer nofollow" href="https://user-images.githubusercontent.com/8609142/173102417-632a0870-d14e-418a-998e-9025aeb6bd03.png"><img src="https://user-images.githubusercontent.com/8609142/173102417-632a0870-d14e-418a-998e-9025aeb6bd03.png" alt="image" style="max-width: 100%;"></a></p>
+<p dir="auto">关于如何在 Ray 上部署 TensorFlow 训练，可参见：<a href="https://github.com/zuston/raytf">https://github.com/zuston/raytf</a></p>
+<h3 dir="auto">云 jupyterlab</h3>
+<p dir="auto">在 codespace 中部署 jupyterlab 作为计算, 使用 juicefs 来共享 mac 的数据，使得计算和存储分离。更多的用法，还在等待挖掘</p>
+<h2 dir="auto">总结</h2>
+<p dir="auto">codespace + juicefs 真香！</p>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <div class="pt-10 pb-16">
+                <script src="https://utteranc.es/client.js"
+                        repo="zuston/zuston.github.io"
+                        issue-term="pathname"
+                        theme="github-light"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            </div>
+            <footer>
+    <div class="sm:px-8">
+        <div class="mx-auto max-w-7xl lg:px-8">
+            <div class="border-t border-zinc-100 pt-10 pb-16 dark:border-zinc-700/40">
+                <div class="relative px-4 sm:px-8 lg:px-12">
+                    <div class="mx-auto max-w-2xl lg:max-w-5xl">
+                        <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                            <div class="flex gap-6 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                                <a class="transition hover:text-teal-500 dark:hover:text-teal-400" href="/">Home</a>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">©
+                                    <!-- -->2023
+                                    <!-- --> zuston. All rights reserved.
+                                </p>
+                                <p class="text-sm text-zinc-400 dark:text-zinc-500">
+                                    Powered by <a href="https://github.com/zuston/lizi" class="text-gray-800 dark:text-white">lizi</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</footer>
+        </div>
+    </div>
+    <link rel="stylesheet" href="/css/color-modes.css">
+    <link rel="stylesheet" href="/css/post.css">
+    <link rel="stylesheet" href="/css/markdown.css">
+    <link rel="stylesheet" href="/css/base.css">
+</body>
+
+</html>
